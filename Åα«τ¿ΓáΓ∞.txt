@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teacher's Hub</title>
+</head>
+<body>
+
+<h1>Welcome to Teacher's Hub</h1>
+<p>T🌟 Welcome to the Teacher Resource Hub
+Welcome to your dedicated space for essential teaching tools and resources. This hub is designed to make your work easier, more organized, and accessible.
+👉 Simply click the buttons below to explore and access each section..</p>
+
+</body>
+</html>
