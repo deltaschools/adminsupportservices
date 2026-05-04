@@ -8,17 +8,17 @@
         /* 🔤 FONTS */
         @font-face {
             font-family: 'GEDinar';
-            src: url('GE-Dinar-Bold.ttf') format('truetype');
+            src: url('./GE-Dinar-Bold.ttf') format('truetype');
         }
 
         @font-face {
             font-family: 'Sansation';
-            src: url('Sansation-Regular.ttf') format('truetype');
+            src: url('./Sansation-Regular.ttf') format('truetype');
         }
 
         body {
             margin: 0;
-            font-family: 'Sansation', Arial, sans-serif;
+            font-family: 'Sansation', Arial, sans-serif !important;
             background: linear-gradient(135deg, #0f4c81, #1e88e5);
             color: white;
             text-align: center;
@@ -30,18 +30,18 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 15px;
+            gap: 25px;
             padding: 30px 20px 10px;
         }
 
         .header img {
-            width: 150px;
+            width: 220px;   /* 🔥 BIG LOGO */
             height: auto;
         }
 
         .header-text h1 {
             margin: 0;
-            font-size: 28px;
+            font-size: 30px;
         }
 
         .header-text p {
@@ -59,13 +59,13 @@
             display: inline-block;
             padding: 35px;
             border-radius: 20px;
-            width: 450px;
+            width: 460px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.25);
         }
 
         /* BIG WELCOME */
         .big-welcome {
-            font-size: 26px;
+            font-size: 28px;
             font-weight: bold;
             margin-bottom: 10px;
         }
@@ -77,14 +77,14 @@
 
         /* ARABIC STYLE */
         .arabic {
-            font-family: 'GEDinar', Arial;
+            font-family: 'GEDinar', Arial !important;
             font-weight: bold;
             direction: rtl;
         }
 
-        /* QR BIGGER */
+        /* QR */
         .qr {
-            width: 200px;
+            width: 220px;   /* 🔥 BIG QR */
             margin: 20px 0;
             border-radius: 10px;
         }
@@ -161,7 +161,7 @@
             امسح رمز الاستجابة السريعة
         </p>
 
-        <!-- QR CODE -->
+        <!-- QR -->
         <img src="qr.png" alt="QR Code" class="qr">
 
         <!-- PASSWORD -->
