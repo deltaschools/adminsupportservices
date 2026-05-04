@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Support Services - Home</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #222;
+        }
+
+        .lang-switch {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+        }
+
+        .lang-switch button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            margin-left: 8px;
+            background: white;
+            color: #1e88e5;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0f4c81, #1e88e5);
+            color: white;
+            text-align: center;
+            padding: 35px 20px 45px;
+        }
+
+        .logo {
+            width: 170px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+
+        header h1 {
+            margin: 5px 0;
+            font-size: 42px;
+        }
+
+        header p {
+            font-size: 18px;
+        }
+
+        nav {
+            background: white;
+            text-align: center;
+            padding: 25px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+        }
+
+        nav button {
+            background: #1e88e5;
+            color: white;
+            border: none;
+            padding: 13px 30px;
+            margin: 8px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        nav button:hover,
+        .side-menu button:hover {
+            background: #0f4c81;
+        }
+
+        .container {
+            max-width: 1150px;
+            margin: 35px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .section, .policy, .track-content, .track-sub-content {
+            display: none;
+        }
+
+        .active {
+            display: block;
+        }
+
+        .layout {
+            display: flex;
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .side-menu {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-right: 3px solid #1e88e5;
+            padding-right: 15px;
+        }
+
+        .side-menu button {
+            background: #1e88e5;
+            color: white;
+            border: none;
+            padding: 13px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        .content-area {
+            flex: 1;
+            background: #f4f7fb;
+            padding: 25px;
+            border-radius: 15px;
+            min-height: 250px;
+        }
+
+        .arabic {
+            direction: rtl;
+            text-align: right;
+            font-weight: bold;
+        }
+
+        h2 {
+            color: #0f4c81;
+        }
+
+        .sub-tabs button {
+            background: #0f4c81;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            margin: 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        ul {
+            line-height: 1.8;
+        }
+    </style>
+
+    <script>
+        let currentLang = "en";
+
+        function setLanguage(lang) {
+            currentLang = lang;
+
+            document.querySelectorAll(".en").forEach(e => e.style.display = lang === "en" ? "block" : "none");
+            document.querySelectorAll(".ar").forEach(e => e.style.display = lang === "ar" ? "block" : "none");
+
+            showSection("announcements");
+        }
+
+        function showSection(section) {
+            document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+
+            document.getElementById(section + "-" + currentLang).classList.add("active");
+        }
+
+        function showPolicy(policy) {
+            document.querySelectorAll(".policy").forEach(p => p.classList.remove("active"));
+            document.getElementById(policy + "-" + currentLang).classList.add("active");
+        }
+
+        function showTrack(track) {
+            document.querySelectorAll(".track-content").forEach(t => t.classList.remove("active"));
+            document.getElementById(track + "-" + currentLang).classList.add("active");
+        }
+
+        function showSubTrack(id) {
+            document.querySelectorAll(".track-sub-content").forEach(s => s.classList.remove("active"));
+            document.getElementById(id + "-" + currentLang).classList.add("active");
+        }
+    </script>
+</head>
+
+<body onload="setLanguage('en')">
+
+<div class="lang-switch">
+    <button onclick="setLanguage('en')">English</button>
+    <button onclick="setLanguage('ar')">العربية</button>
+</div>
+
+<header>
+    <img src="logo.png" alt="School Logo" class="logo">
+
+    <div class="en">
+        <h1>Admin Support Services</h1>
+        <p>Empowering Staff • Enhancing Workflow • Supporting Excellence</p>
+    </div>
+
+    <div class="ar arabic" style="display:none;">
+        <h1>خدمات الدعم الإداري</h1>
+        <p>تمكين الموظفين • تحسين سير العمل • دعم التميز</p>
+    </div>
+</header>
+
+<nav>
+    <div class="en">
+        <button onclick="showSection('announcements')">ANNOUNCEMENTS</button>
+        <button onclick="showSection('general')">GENERAL SERVICES</button>
+        <button onclick="showSection('hub')">TEACHER'S HUB</button>
+    </div>
+
+    <div class="ar arabic" style="display:none;">
+        <button onclick="showSection('announcements')">الإعلانات</button>
+        <button onclick="showSection('general')">الخدمات العامة</button>
+        <button onclick="showSection('hub')">بوابة المعلم</button>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- ANNOUNCEMENTS EN -->
+    <div id="announcements-en" class="section">
+        <h2>Announcements</h2>
+        <p>All important announcements, reminders, and updates will be posted here.</p>
+    </div>
+
+    <!-- ANNOUNCEMENTS AR -->
+    <div id="announcements-ar" class="section arabic">
+        <h2>الإعلانات</h2>
+        <p>سيتم نشر جميع الإعلانات والتحديثات والتذكيرات المهمة هنا.</p>
+    </div>
+
+    <!-- GENERAL SERVICES EN -->
+    <div id="general-en" class="section">
+        <h2>General Services</h2>
+        <p>The Administrative Support Services (A.S.S.) Department is committed to providing comprehensive support to all staff through the following services.</p>
+
+        <div class="layout">
+            <div class="side-menu">
+                <button onclick="showPolicy('printing')">Printing Documents / Files Policies</button>
+                <button onclick="showPolicy('employeeid')">Issuing Employee ID</button>
+                <button onclick="showPolicy('stationery')">Supplying Stationery and Issuing Books</button>
+                <button onclick="showPolicy('maintenance')">Maintenance Services</button>
+            </div>
+
+            <div class="content-area">
+                <div id="printing-en" class="policy active">
+                    <h3>Printing Documents / Files Policies</h3>
+                    <p>Write the printing documents/files policy here.</p>
+                </div>
+
+                <div id="employeeid-en" class="policy">
+                    <h3>Issuing Employee ID</h3>
+                    <p>Write the employee ID policy here.</p>
+                </div>
+
+                <div id="stationery-en" class="policy">
+                    <h3>Supplying Stationery and Issuing Books</h3>
+                    <p>Write the stationery and books policy here.</p>
+                </div>
+
+                <div id="maintenance-en" class="policy">
+                    <h3>Maintenance Services</h3>
+                    <p>Write the maintenance services policy here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GENERAL SERVICES AR -->
+    <div id="general-ar" class="section arabic">
+        <h2>الخدمات العامة</h2>
+        <p>قسم خدمات الدعم الإداري ملتزم بتقديم دعم شامل لجميع الموظفين من خلال الخدمات التالية.</p>
+
+        <div class="layout">
+            <div class="side-menu">
+                <button onclick="showPolicy('printing')">سياسة طباعة المستندات / الملفات</button>
+                <button onclick="showPolicy('employeeid')">إصدار بطاقة الموظف</button>
+                <button onclick="showPolicy('stationery')">توفير القرطاسية وإصدار الكتب</button>
+                <button onclick="showPolicy('maintenance')">خدمات الصيانة</button>
+            </div>
+
+            <div class="content-area">
+                <div id="printing-ar" class="policy active">
+                    <h3>سياسة طباعة المستندات / الملفات</h3>
+                    <p>اكتبي هنا سياسة طباعة المستندات والملفات.</p>
+                </div>
+
+                <div id="employeeid-ar" class="policy">
+                    <h3>إصدار بطاقة الموظف</h3>
+                    <p>اكتبي هنا سياسة إصدار بطاقة الموظف.</p>
+                </div>
+
+                <div id="stationery-ar" class="policy">
+                    <h3>توفير القرطاسية وإصدار الكتب</h3>
+                    <p>اكتبي هنا سياسة توفير القرطاسية وإصدار الكتب.</p>
+                </div>
+
+                <div id="maintenance-ar" class="policy">
+                    <h3>خدمات الصيانة</h3>
+                    <p>اكتبي هنا سياسة خدمات الصيانة.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEACHER HUB EN -->
+    <div id="hub-en" class="section">
+        <h2>Teacher's Hub</h2>
+
+        <div class="layout">
+            <div class="side-menu">
+                <button onclick="showTrack('egyptian')">Egyptian Track</button>
+                <button onclick="showTrack('international')">International Section</button>
+                <button onclick="showTrack('national')">National Section</button>
+            </div>
+
+            <div class="content-area">
+                <div id="egyptian-en" class="track-content active">
+                    <h3>Egyptian Track</h3>
+                    <div class="sub-tabs">
+                        <button onclick="showSubTrack('egyptian-forms')">Forms</button>
+                        <button onclick="showSubTrack('egyptian-resources')">Resources</button>
+                        <button onclick="showSubTrack('egyptian-policies')">Policies</button>
+                    </div>
+
+                    <div id="egyptian-forms-en" class="track-sub-content active"><p>Egyptian Track forms will be added here.</p></div>
+                    <div id="egyptian-resources-en" class="track-sub-content"><p>Egyptian Track resources will be added here.</p></div>
+                    <div id="egyptian-policies-en" class="track-sub-content"><p>Egyptian Track policies will be added here.</p></div>
+                </div>
+
+                <div id="international-en" class="track-content">
+                    <h3>International Section</h3>
+                    <div class="sub-tabs">
+                        <button onclick="showSubTrack('international-forms')">Forms</button>
+                        <button onclick="showSubTrack('international-resources')">Resources</button>
+                        <button onclick="showSubTrack('international-policies')">Policies</button>
+                    </div>
+
+                    <div id="international-forms-en" class="track-sub-content active"><p>International Section forms will be added here.</p></div>
+                    <div id="international-resources-en" class="track-sub-content"><p>International Section resources will be added here.</p></div>
+                    <div id="international-policies-en" class="track-sub-content"><p>International Section policies will be added here.</p></div>
+                </div>
+
+                <div id="national-en" class="track-content">
+                    <h3>National Section</h3>
+                    <div class="sub-tabs">
+                        <button onclick="showSubTrack('national-forms')">Forms</button>
+                        <button onclick="showSubTrack('national-resources')">Resources</button>
+                        <button onclick="showSubTrack('national-policies')">Policies</button>
+                    </div>
+
+                    <div id="national-forms-en" class="track-sub-content active"><p>National Section forms will be added here.</p></div>
+                    <div id="national-resources-en" class="track-sub-content"><p>National Section resources will be added here.</p></div>
+                    <div id="national-policies-en" class="track-sub-content"><p>National Section policies will be added here.</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEACHER HUB AR -->
+    <div id="hub-ar" class="section arabic">
+        <h2>بوابة المعلم</h2>
+
+        <div class="layout">
+            <div class="side-menu">
+                <button onclick="showTrack('egyptian')">المسار المصري</button>
+                <button onclick="showTrack('international')">القسم العالمي</button>
+                <button onclick="showTrack('national')">القسم الوطني</button>
+            </div>
+
+            <div class="content-area">
+                <div id="egyptian-ar" class="track-content active">
+                    <h3>المسار المصري</h3>
+                    <div class="sub-tabs">
+                        <button onclick="showSubTrack('egyptian-forms')">النماذج</button>
+                        <button onclick="showSubTrack('egyptian-resources')">الموارد</button>
+                        <button onclick="showSubTrack('egyptian-policies')">السياسات</button>
+                    </div>
+
+                    <div id="egyptian-forms-ar" class="track-sub-content active"><p>سيتم إضافة نماذج المسار المصري هنا.</p></div>
+                    <div id="egyptian-resources-ar" class="track-sub-content"><p>سيتم إضافة موارد المسار المصري هنا.</p></div>
+                    <div id="egyptian-policies-ar" class="track-sub-content"><p>سيتم إضافة سياسات المسار المصري هنا.</p></div>
+                </div>
+
+                <div id="international-ar" class="track-content">
+                    <h3>القسم العالمي</h3>
+                    <div class="sub-tabs">
+                        <button onclick="showSubTrack('international-forms')">النماذج</button>
+                        <button onclick="showSubTrack('international-resources')">الموارد</button>
+                        <button onclick="showSubTrack('international-policies')">السياسات</button>
+                    </div>
+
+                    <div id="international-forms-ar" class="track-sub-content active"><p>سيتم إضافة نماذج القسم العالمي هنا.</p></div>
+                    <div id="international-resources-ar" class="track-sub-content"><p>سيتم إضافة موارد القسم العالمي هنا.</p></div>
+                    <div id="international-policies-ar" class="track-sub-content"><p>سيتم إضافة سياسات القسم العالمي هنا.</p></div>
+                </div>
+
+                <div id="national-ar" class="track-content">
+                    <h3>القسم الوطني</h3>
+                    <div class="sub-tabs">
+                        <button onclick="showSubTrack('national-forms')">النماذج</button>
+                        <button onclick="showSubTrack('national-resources')">الموارد</button>
+                        <button onclick="showSubTrack('national-policies')">السياسات</button>
+                    </div>
+
+                    <div id="national-forms-ar" class="track-sub-content active"><p>سيتم إضافة نماذج القسم الوطني هنا.</p></div>
+                    <div id="national-resources-ar" class="track-sub-content"><p>سيتم إضافة موارد القسم الوطني هنا.</p></div>
+                    <div id="national-policies-ar" class="track-sub-content"><p>سيتم إضافة سياسات القسم الوطني هنا.</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
