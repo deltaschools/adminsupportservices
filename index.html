@@ -4,16 +4,28 @@
     <title>Admin Support Services</title>
 
     <style>
+
+        /* 🔤 FONTS */
+        @font-face {
+            font-family: 'GEDinar';
+            src: url('GE-Dinar-Bold.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'Sansation';
+            src: url('Sansation-Regular.ttf') format('truetype');
+        }
+
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
+            font-family: 'Sansation', Arial, sans-serif;
             background: linear-gradient(135deg, #0f4c81, #1e88e5);
             color: white;
             text-align: center;
             min-height: 100vh;
         }
 
-        /* HEADER WITH LOGO */
+        /* HEADER */
         .header {
             display: flex;
             justify-content: center;
@@ -23,11 +35,13 @@
         }
 
         .header img {
-            width: 60px;
+            width: 150px;
+            height: auto;
         }
 
         .header-text h1 {
             margin: 0;
+            font-size: 28px;
         }
 
         .header-text p {
@@ -45,19 +59,15 @@
             display: inline-block;
             padding: 35px;
             border-radius: 20px;
-            width: 430px;
+            width: 450px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.25);
         }
 
-        .logo {
-            width: 100px;
+        /* BIG WELCOME */
+        .big-welcome {
+            font-size: 26px;
+            font-weight: bold;
             margin-bottom: 10px;
-        }
-
-        .qr {
-            width: 160px;
-            margin: 10px 0 15px;
-            border-radius: 10px;
         }
 
         p {
@@ -65,11 +75,18 @@
             line-height: 1.6;
         }
 
-        /* BIG WELCOME */
-        .big-welcome {
-            font-size: 22px;
+        /* ARABIC STYLE */
+        .arabic {
+            font-family: 'GEDinar', Arial;
             font-weight: bold;
-            margin-bottom: 10px;
+            direction: rtl;
+        }
+
+        /* QR BIGGER */
+        .qr {
+            width: 200px;
+            margin: 20px 0;
+            border-radius: 10px;
         }
 
         input {
@@ -94,6 +111,7 @@
         button:hover {
             background: #0f4c81;
         }
+
     </style>
 
     <script>
@@ -107,6 +125,7 @@
             }
         }
     </script>
+
 </head>
 
 <body>
@@ -126,11 +145,13 @@
         <!-- BIG WELCOME -->
         <div class="big-welcome">Welcome on board</div>
 
+        <!-- ENGLISH -->
         <p>
             To obtain the access password, please scan the QR code and complete the Google Form with the required information.
         </p>
 
-        <p dir="rtl">
+        <!-- ARABIC -->
+        <p class="arabic">
             مرحبًا بكم.<br>
             للحصول على كلمة المرور، يرجى مسح رمز الاستجابة السريعة (QR) وتعبئة نموذج جوجل بالبيانات المطلوبة.
         </p>
@@ -140,8 +161,10 @@
             امسح رمز الاستجابة السريعة
         </p>
 
+        <!-- QR CODE -->
         <img src="qr.png" alt="QR Code" class="qr">
 
+        <!-- PASSWORD -->
         <input type="password" id="pass" placeholder="Enter password / أدخل كلمة المرور"><br>
         <button onclick="checkPassword()">Enter / دخول</button>
 
