@@ -13,16 +13,25 @@
             min-height: 100vh;
         }
 
-        header {
-            padding: 35px 20px 10px;
+        /* HEADER WITH LOGO */
+        .header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 30px 20px 10px;
         }
 
-        header h1 {
-            margin-bottom: 8px;
+        .header img {
+            width: 60px;
         }
 
-        header p {
-            margin-top: 0;
+        .header-text h1 {
+            margin: 0;
+        }
+
+        .header-text p {
+            margin: 5px 0 0;
             font-size: 14px;
         }
 
@@ -54,6 +63,13 @@
         p {
             font-size: 14px;
             line-height: 1.6;
+        }
+
+        /* BIG WELCOME */
+        .big-welcome {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 10px;
         }
 
         input {
@@ -95,25 +111,27 @@
 
 <body>
 
-<header>
-    <h1>Admin Support Services</h1>
-    <p>Empowering Staff • Enhancing Workflow • Supporting Excellence</p>
-</header>
+<!-- HEADER -->
+<div class="header">
+    <img src="logo.png" alt="School Logo">
+    <div class="header-text">
+        <h1>Admin Support Services</h1>
+        <p>Empowering Staff • Enhancing Workflow • Supporting Excellence</p>
+    </div>
+</div>
 
 <div class="container">
     <div class="box">
 
-        <img src="logo.png" alt="School Logo" class="logo">
-
-        <h2>Welcome</h2>
+        <!-- BIG WELCOME -->
+        <div class="big-welcome">Welcome on board</div>
 
         <p>
-            <strong>Welcome on board.</strong><br>
             To obtain the access password, please scan the QR code and complete the Google Form with the required information.
         </p>
 
         <p dir="rtl">
-            <strong>مرحبًا بكم.</strong><br>
+            مرحبًا بكم.<br>
             للحصول على كلمة المرور، يرجى مسح رمز الاستجابة السريعة (QR) وتعبئة نموذج جوجل بالبيانات المطلوبة.
         </p>
 
