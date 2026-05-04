@@ -8,7 +8,8 @@
         /* 🔤 FONTS */
         @font-face {
             font-family: 'GEDinar';
-            src: url('GE%20Dinar%20Bold.ttf') format('truetype');
+            src: url('GE-Dinar-Bold.woff') format('woff'),
+                 url('GE-Dinar-Bold.ttf') format('truetype');
         }
 
         @font-face {
@@ -63,7 +64,6 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.25);
         }
 
-        /* BIG TITLE */
         .big-welcome {
             font-size: 28px;
             font-weight: bold;
@@ -75,15 +75,14 @@
             line-height: 1.6;
         }
 
-        /* ARABIC */
+        /* 🔴 ARABIC (with fallback) */
         .arabic {
-            font-family: 'GEDinar' !important;
+            font-family: 'GEDinar', 'Cairo', 'Tahoma', Arial, sans-serif;
             direction: rtl;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 18px;
         }
 
-        /* QR */
         .qr {
             width: 220px;
             margin: 20px 0;
@@ -143,7 +142,6 @@
 <div class="container">
     <div class="box">
 
-        <!-- BIG WELCOME -->
         <div class="big-welcome">Welcome on board</div>
 
         <!-- ENGLISH -->
@@ -162,10 +160,8 @@
             <span class="arabic">امسح رمز الاستجابة السريعة</span>
         </p>
 
-        <!-- QR -->
         <img src="qr.png" alt="QR Code" class="qr">
 
-        <!-- PASSWORD -->
         <input type="password" id="pass" placeholder="Enter password / أدخل كلمة المرور"><br>
         <button onclick="checkPassword()">Enter / دخول</button>
 
