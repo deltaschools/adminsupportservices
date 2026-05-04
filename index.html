@@ -1,41 +1,82 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Delta Teachers Hub</title>
+    <title>Admin Support Services</title>
 
     <style>
         body {
             margin: 0;
-            font-family: Arial;
+            font-family: Arial, sans-serif;
             background: linear-gradient(135deg, #0f4c81, #1e88e5);
-            text-align: center;
             color: white;
+            text-align: center;
+            min-height: 100vh;
+        }
+
+        header {
+            padding: 35px 20px 10px;
+        }
+
+        header h1 {
+            margin-bottom: 8px;
+        }
+
+        header p {
+            margin-top: 0;
+            font-size: 14px;
+        }
+
+        .container {
+            margin-top: 25px;
         }
 
         .box {
             background: white;
             color: #333;
             display: inline-block;
-            padding: 40px;
-            margin-top: 100px;
-            border-radius: 15px;
-            width: 350px;
+            padding: 35px;
+            border-radius: 20px;
+            width: 430px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+        }
+
+        .logo {
+            width: 100px;
+            margin-bottom: 10px;
+        }
+
+        .qr {
+            width: 160px;
+            margin: 10px 0 15px;
+            border-radius: 10px;
+        }
+
+        p {
+            font-size: 14px;
+            line-height: 1.6;
         }
 
         input {
             width: 80%;
-            padding: 10px;
-            margin-top: 15px;
+            padding: 12px;
+            margin-top: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
         }
 
         button {
             margin-top: 15px;
-            padding: 10px 20px;
+            padding: 10px 25px;
             background: #1e88e5;
             color: white;
             border: none;
-            border-radius: 20px;
+            border-radius: 25px;
             cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #0f4c81;
         }
     </style>
 
@@ -50,21 +91,43 @@
             }
         }
     </script>
-
 </head>
 
 <body>
 
-<div class="box">
-    <h2>Delta Teachers Hub</h2>
+<header>
+    <h1>Admin Support Services</h1>
+    <p>Empowering Staff • Enhancing Workflow • Supporting Excellence</p>
+</header>
 
-    <p>Welcome to your dedicated teacher platform.</p>
+<div class="container">
+    <div class="box">
 
-    <p><strong>Instructions:</strong><br>
-    Enter the password to unlock more information.</p>
+        <img src="logo.png" alt="School Logo" class="logo">
 
-    <input type="password" id="pass" placeholder="Enter password"><br>
-    <button onclick="checkPassword()">Enter</button>
+        <h2>Welcome</h2>
+
+        <p>
+            <strong>Welcome on board.</strong><br>
+            To obtain the access password, please scan the QR code and complete the Google Form with the required information.
+        </p>
+
+        <p dir="rtl">
+            <strong>مرحبًا بكم.</strong><br>
+            للحصول على كلمة المرور، يرجى مسح رمز الاستجابة السريعة (QR) وتعبئة نموذج جوجل بالبيانات المطلوبة.
+        </p>
+
+        <p>
+            <strong>Scan QR Code</strong><br>
+            امسح رمز الاستجابة السريعة
+        </p>
+
+        <img src="qr.png" alt="QR Code" class="qr">
+
+        <input type="password" id="pass" placeholder="Enter password / أدخل كلمة المرور"><br>
+        <button onclick="checkPassword()">Enter / دخول</button>
+
+    </div>
 </div>
 
 </body>
