@@ -8,7 +8,7 @@
         /* 🔤 FONTS */
         @font-face {
             font-family: 'GEDinar';
-            src: url('./GE-Dinar-Bold.ttf') format('truetype');
+            src: url('./GE%20Dinar%20Bold.ttf') format('truetype');
         }
 
         @font-face {
@@ -18,7 +18,7 @@
 
         body {
             margin: 0;
-            font-family: 'Sansation', GEDinar, sans-serif !important;
+            font-family: 'Sansation', Arial, sans-serif;
             background: linear-gradient(135deg, #0f4c81, #1e88e5);
             color: white;
             text-align: center;
@@ -35,7 +35,7 @@
         }
 
         .header img {
-            width: 220px;   /* 🔥 BIG LOGO */
+            width: 220px;
             height: auto;
         }
 
@@ -63,7 +63,6 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.25);
         }
 
-        /* BIG WELCOME */
         .big-welcome {
             font-size: 28px;
             font-weight: bold;
@@ -75,16 +74,16 @@
             line-height: 1.6;
         }
 
-        /* ARABIC STYLE */
+        /* 🔴 ARABIC FIXED */
         .arabic {
-            font-family: 'GEDinar', GEDinar !important;
-            font-weight: bold;
+            font-family: 'GEDinar', Arial !important;
             direction: rtl;
+            font-weight: bold;
+            font-size: 16px;
         }
 
-        /* QR */
         .qr {
-            width: 220px;   /* 🔥 BIG QR */
+            width: 220px;
             margin: 20px 0;
             border-radius: 10px;
         }
@@ -142,15 +141,13 @@
 <div class="container">
     <div class="box">
 
-        <!-- BIG WELCOME -->
         <div class="big-welcome">Welcome on board</div>
 
-        <!-- ENGLISH -->
         <p>
             To obtain the access password, please scan the QR code and complete the Google Form with the required information.
         </p>
 
-        <!-- ARABIC -->
+        <!-- 🔴 ARABIC -->
         <p class="arabic">
             مرحبًا بكم.<br>
             للحصول على كلمة المرور، يرجى مسح رمز الاستجابة السريعة (QR) وتعبئة نموذج جوجل بالبيانات المطلوبة.
@@ -161,10 +158,8 @@
             امسح رمز الاستجابة السريعة
         </p>
 
-        <!-- QR -->
         <img src="qr.png" alt="QR Code" class="qr">
 
-        <!-- PASSWORD -->
         <input type="password" id="pass" placeholder="Enter password / أدخل كلمة المرور"><br>
         <button onclick="checkPassword()">Enter / دخول</button>
 
