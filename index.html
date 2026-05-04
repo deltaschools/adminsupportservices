@@ -131,9 +131,15 @@
             if (lang === 'ar') {
                 document.getElementById('en').style.display = 'none';
                 document.getElementById('ar').style.display = 'block';
+
+                document.getElementById('header-en').style.display = 'none';
+                document.getElementById('header-ar').style.display = 'block';
             } else {
                 document.getElementById('en').style.display = 'block';
                 document.getElementById('ar').style.display = 'none';
+
+                document.getElementById('header-en').style.display = 'block';
+                document.getElementById('header-ar').style.display = 'none';
             }
         }
 
@@ -158,9 +164,15 @@
 
 <div class="header">
     <img src="logo.png" alt="School Logo">
-    <div class="header-text">
+
+    <div id="header-en" class="header-text">
         <h1>Admin Support Services</h1>
         <p>Empowering Staff • Enhancing Workflow • Supporting Excellence</p>
+    </div>
+
+    <div id="header-ar" class="header-text arabic" style="display:none;">
+        <h1>خدمات الدعم الإداري</h1>
+        <p>تمكين الموظفين • تحسين سير العمل • دعم التميز</p>
     </div>
 </div>
 
