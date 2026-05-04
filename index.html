@@ -8,12 +8,12 @@
         /* 🔤 FONTS */
         @font-face {
             font-family: 'GEDinar';
-            src: url('./GE%20Dinar%20Bold.ttf') format('truetype');
+            src: url('GE%20Dinar%20Bold.ttf') format('truetype');
         }
 
         @font-face {
             font-family: 'Sansation';
-            src: url('./Sansation-Regular.ttf') format('truetype');
+            src: url('Sansation-Regular.ttf') format('truetype');
         }
 
         body {
@@ -30,12 +30,12 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 25px;
+            gap: 20px;
             padding: 30px 20px 10px;
         }
 
         .header img {
-            width: 220px;
+            width: 200px;
             height: auto;
         }
 
@@ -63,6 +63,7 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.25);
         }
 
+        /* BIG TITLE */
         .big-welcome {
             font-size: 28px;
             font-weight: bold;
@@ -74,14 +75,15 @@
             line-height: 1.6;
         }
 
-        /* 🔴 ARABIC FIXED */
+        /* ARABIC */
         .arabic {
-            font-family: 'GEDinar', Arial !important;
+            font-family: 'GEDinar' !important;
             direction: rtl;
             font-weight: bold;
             font-size: 16px;
         }
 
+        /* QR */
         .qr {
             width: 220px;
             margin: 20px 0;
@@ -141,13 +143,15 @@
 <div class="container">
     <div class="box">
 
+        <!-- BIG WELCOME -->
         <div class="big-welcome">Welcome on board</div>
 
+        <!-- ENGLISH -->
         <p>
             To obtain the access password, please scan the QR code and complete the Google Form with the required information.
         </p>
 
-        <!-- 🔴 ARABIC -->
+        <!-- ARABIC -->
         <p class="arabic">
             مرحبًا بكم.<br>
             للحصول على كلمة المرور، يرجى مسح رمز الاستجابة السريعة (QR) وتعبئة نموذج جوجل بالبيانات المطلوبة.
@@ -155,11 +159,13 @@
 
         <p>
             <strong>Scan QR Code</strong><br>
-            امسح رمز الاستجابة السريعة
+            <span class="arabic">امسح رمز الاستجابة السريعة</span>
         </p>
 
+        <!-- QR -->
         <img src="qr.png" alt="QR Code" class="qr">
 
+        <!-- PASSWORD -->
         <input type="password" id="pass" placeholder="Enter password / أدخل كلمة المرور"><br>
         <button onclick="checkPassword()">Enter / دخول</button>
 
