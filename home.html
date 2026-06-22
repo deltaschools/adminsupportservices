@@ -73,7 +73,8 @@ nav button {
 }
 
 nav button:hover,
-.sidebar button:hover {
+.sidebar button:hover,
+.resource-btn:hover {
     background: #003366;
 }
 
@@ -146,13 +147,6 @@ nav button:hover,
     margin: 10px 0 20px;
 }
 
-iframe {
-    width: 100%;
-    height: 315px;
-    border: none;
-    border-radius: 12px;
-}
-
 h2, h3 {
     color: #001f4d;
 }
@@ -191,10 +185,10 @@ function showSection(id) {
     document.getElementById(id + "-" + lang).classList.add("active");
 }
 
-function showContent(title, text) {
+function showContent(title, text, link = "#") {
     document.getElementById("contentTitle-" + lang).innerText = title;
     document.getElementById("contentText-" + lang).innerText = text;
-    document.getElementById("contentLink-" + lang).href = "#";
+    document.getElementById("contentLink-" + lang).href = link;
 }
 </script>
 </head>
@@ -241,51 +235,28 @@ function showContent(title, text) {
 <div id="home-en" class="section active">
     <h2>Home</h2>
     <p>Welcome to the Admin Support Services platform. Use the navigation menu to access announcements, services, and teacher resources.</p>
-    <P>To ensure access to all resources, forms, schedules, and documents, please make sure that your browser is logged in using your official school email account.
-Some resources are restricted and may not be accessible from personal email accounts.</P>
+    <p>Please ensure that your browser is logged in using your official school email account before accessing any links, forms, schedules, or documents.</p>
 </div>
 
 <div id="home-ar" class="section arabic">
     <h2>الرئيسية</h2>
     <p>مرحبًا بكم في منصة خدمات الدعم الإداري. يرجى استخدام القائمة للوصول إلى الإعلانات والخدمات وموارد المعلمين.</p>
-    <P>تذكير بالدخول
-لضمان الوصول إلى جميع الموارد والنماذج والجداول والمستندات، يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.
-قد لا تكون بعض الموارد متاحة عند استخدام بريد إلكتروني شخصي.</P>
+    <p>يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة قبل الوصول إلى أي روابط أو نماذج أو جداول أو مستندات.</p>
 </div>
 
 <div id="announcements-en" class="section">
     <h2>Announcements</h2>
     <div class="layout">
         <div class="sidebar">
-            <button onclick="showContent('General','General announcements will appear here.')">📌 General</button>
-            <details open>
-                <summary>📅 Important Dates & Deadlines</summary>
-                <button onclick="showContent('Assessment Schedule','Add assessment schedule links and details here.')">Assessment Schedule</button>
-                <button onclick="showContent('Test Schedule','Add test schedule links and details here.')">Test Schedule</button>
-                <button onclick="showContent('Final Examination Schedule','Add final examination schedule here.')">Final Examination Schedule</button>
-                <button onclick="showContent('Exam Paper Submission Schedule','Add exam paper submission schedule here.')">Exam Paper Submission Schedule</button>
-                <button onclick="showContent('Marksheet Submission Deadlines','Add marksheet submission deadlines here.')">Marksheet Submission Deadlines</button>
-                <button onclick="showContent('Grade Entry Deadlines','Add grade entry deadlines here.')">Grade Entry Deadlines</button>
-            </details>
-            <details>
-                <summary>🎓 Professional Development</summary>
-                <button onclick="showContent('Workshops','Workshop details will appear here.')">Workshops</button>
-                <button onclick="showContent('Training Sessions','Training session details will appear here.')">Training Sessions</button>
-                <button onclick="showContent('Certifications','Certification details will appear here.')">Certifications</button>
-                <button onclick="showContent('Webinars','Webinar links will appear here.')">Webinars</button>
-            </details>
-            <details>
-                <summary>📝 Assessment Updates</summary>
-                <button onclick="showContent('Exam Paper Submission Reminders','Add reminders here.')">Exam Paper Submission Reminders</button>
-                <button onclick="showContent('MAP Growth Schedule','Add MAP Growth schedule here.')">MAP Growth Schedule</button>
-                <button onclick="showContent('Assessment Procedures','Add assessment procedures here.')">Assessment Procedures</button>
-                <button onclick="showContent('Assessment Guidelines','Add assessment guidelines here.')">Assessment Guidelines</button>
-            </details>
+            <button onclick="showContent('General Announcements','Stay informed with the latest school-wide announcements, updates, reminders, and important notices. Please click the link below to view current announcements. Please ensure that your browser is logged in using your official school email account.')">📌 General Announcements</button>
+
+            <button onclick="showContent('Important Dates & Deadlines','To access the latest schedules, deadlines, and important academic dates, please click the link below. Please ensure that your browser is logged in using your official school email account.')">📅 Important Dates & Deadlines</button>
         </div>
+
         <div class="content-area">
             <h3 id="contentTitle-en">Announcements</h3>
             <p id="contentText-en">Select an item from the left menu.</p>
-            <a id="contentLink-en" class="resource-btn" href="#">Open Link</a>
+            <a id="contentLink-en" class="resource-btn" href="#" target="_blank">Open Link</a>
         </div>
     </div>
 </div>
@@ -294,35 +265,15 @@ Some resources are restricted and may not be accessible from personal email acco
     <h2>الإعلانات</h2>
     <div class="layout">
         <div class="sidebar">
-            <button onclick="showContent('عام','سيتم عرض الإعلانات العامة هنا.')">📌 عام</button>
-            <details open>
-                <summary>📅 التواريخ والمواعيد المهمة</summary>
-                <button onclick="showContent('جدول التقييمات','أضيفي روابط وتفاصيل جدول التقييمات هنا.')">جدول التقييمات</button>
-                <button onclick="showContent('جدول الاختبارات','أضيفي روابط وتفاصيل جدول الاختبارات هنا.')">جدول الاختبارات</button>
-                <button onclick="showContent('جدول الاختبارات النهائية','أضيفي جدول الاختبارات النهائية هنا.')">جدول الاختبارات النهائية</button>
-                <button onclick="showContent('جدول تسليم أوراق الاختبار','أضيفي جدول تسليم أوراق الاختبار هنا.')">جدول تسليم أوراق الاختبار</button>
-                <button onclick="showContent('مواعيد تسليم كشوف الدرجات','أضيفي مواعيد تسليم كشوف الدرجات هنا.')">مواعيد تسليم كشوف الدرجات</button>
-                <button onclick="showContent('مواعيد إدخال الدرجات','أضيفي مواعيد إدخال الدرجات هنا.')">مواعيد إدخال الدرجات</button>
-            </details>
-            <details>
-                <summary>🎓 التطوير المهني</summary>
-                <button onclick="showContent('ورش العمل','سيتم عرض تفاصيل ورش العمل هنا.')">ورش العمل</button>
-                <button onclick="showContent('جلسات التدريب','سيتم عرض تفاصيل جلسات التدريب هنا.')">جلسات التدريب</button>
-                <button onclick="showContent('الشهادات','سيتم عرض تفاصيل الشهادات هنا.')">الشهادات</button>
-                <button onclick="showContent('الندوات الإلكترونية','سيتم عرض روابط الندوات هنا.')">الندوات الإلكترونية</button>
-            </details>
-            <details>
-                <summary>📝 تحديثات التقييم</summary>
-                <button onclick="showContent('تذكيرات تسليم أوراق الاختبار','أضيفي التذكيرات هنا.')">تذكيرات تسليم أوراق الاختبار</button>
-                <button onclick="showContent('جدول MAP Growth','أضيفي جدول MAP Growth هنا.')">جدول MAP Growth</button>
-                <button onclick="showContent('إجراءات التقييم','أضيفي إجراءات التقييم هنا.')">إجراءات التقييم</button>
-                <button onclick="showContent('إرشادات التقييم','أضيفي إرشادات التقييم هنا.')">إرشادات التقييم</button>
-            </details>
+            <button onclick="showContent('الإعلانات العامة','ابقَ على اطلاع بآخر الإعلانات المدرسية والتحديثات والتنبيهات والإشعارات المهمة. يرجى الضغط على الرابط أدناه لعرض الإعلانات الحالية. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">📌 الإعلانات العامة</button>
+
+            <button onclick="showContent('التواريخ والمواعيد المهمة','للوصول إلى أحدث الجداول الزمنية والمواعيد النهائية والتواريخ الأكاديمية المهمة، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">📅 التواريخ والمواعيد المهمة</button>
         </div>
+
         <div class="content-area">
             <h3 id="contentTitle-ar">الإعلانات</h3>
             <p id="contentText-ar">اختاري عنصرًا من القائمة الجانبية.</p>
-            <a id="contentLink-ar" class="resource-btn" href="#">فتح الرابط</a>
+            <a id="contentLink-ar" class="resource-btn" href="#" target="_blank">فتح الرابط</a>
         </div>
     </div>
 </div>
@@ -331,24 +282,27 @@ Some resources are restricted and may not be accessible from personal email acco
     <h2>Administrative Services</h2>
     <div class="layout">
         <div class="sidebar">
-            <button onclick="showContent('Printing Services','Printing policy, guidelines, and request links will appear here.')">🖨️ Printing Services</button>
+            <button onclick="showContent('Printing Services','To access printing policies, guidelines, and request forms, please click the link below. Please ensure that your browser is logged in using your official school email account.')">🖨️ Printing Services</button>
+
             <details open>
                 <summary>📥 Forms & Resources</summary>
-                <button onclick="showContent('Worksheet Template','Add worksheet template link here.')">Worksheet Template</button>
-                <button onclick="showContent('Printing Request Form','Add printing request form link here.')">Printing Request Form</button>
-                <button onclick="showContent('Font Downloads','Add font download links here.')">Font Downloads</button>
-                <button onclick="showContent('Font Installation Guide','Add font installation guide here.')">Font Installation Guide</button>
-                <button onclick="showContent('School Logos','Add school logo files here.')">School Logos</button>
-                <button onclick="showContent('Academic Calendar','Add academic calendar link here.')">Academic Calendar</button>
+                <button onclick="showContent('Worksheet Template','To access the worksheet template, please click the link below. Please ensure that your browser is logged in using your official school email account.')">Worksheet Template</button>
+                <button onclick="showContent('Printing Request Form','To access the printing request form, please click the link below. Please ensure that your browser is logged in using your official school email account.')">Printing Request Form</button>
+                <button onclick="showContent('Font Downloads','To access font downloads, please click the link below. Please ensure that your browser is logged in using your official school email account.')">Font Downloads</button>
+                <button onclick="showContent('Font Installation Guide','To access the font installation guide, please click the link below. Please ensure that your browser is logged in using your official school email account.')">Font Installation Guide</button>
+                <button onclick="showContent('School Logos','To access school logos, please click the link below. Please ensure that your browser is logged in using your official school email account.')">School Logos</button>
+                <button onclick="showContent('Academic Calendar','To access the academic calendar, please click the link below. Please ensure that your browser is logged in using your official school email account.')">Academic Calendar</button>
             </details>
-            <button onclick="showContent('Employee ID Services','Employee ID policy and request process will appear here.')">🪪 Employee ID Services</button>
-            <button onclick="showContent('Stationery & Books','Stationery and books request guidelines will appear here.')">📚 Stationery & Books</button>
-            <button onclick="showContent('Maintenance Services','Maintenance request procedures will appear here.')">🔧 Maintenance Services</button>
+
+            <button onclick="showContent('Employee ID Services','To access employee ID service instructions and request details, please click the link below. Please ensure that your browser is logged in using your official school email account.')">🪪 Employee ID Services</button>
+            <button onclick="showContent('Stationery & Books','To access stationery and book request information, please click the link below. Please ensure that your browser is logged in using your official school email account.')">📚 Stationery & Books</button>
+            <button onclick="showContent('Maintenance Services','To access maintenance service procedures and request details, please click the link below. Please ensure that your browser is logged in using your official school email account.')">🔧 Maintenance Services</button>
         </div>
+
         <div class="content-area">
             <h3 id="contentTitle-en">Administrative Services</h3>
             <p id="contentText-en">Select an item from the left menu.</p>
-            <a id="contentLink-en" class="resource-btn" href="#">Open Link</a>
+            <a id="contentLink-en" class="resource-btn" href="#" target="_blank">Open Link</a>
         </div>
     </div>
 </div>
@@ -357,24 +311,27 @@ Some resources are restricted and may not be accessible from personal email acco
     <h2>الخدمات الإدارية</h2>
     <div class="layout">
         <div class="sidebar">
-            <button onclick="showContent('خدمات الطباعة','سيتم عرض سياسة الطباعة والإرشادات وروابط الطلب هنا.')">🖨️ خدمات الطباعة</button>
+            <button onclick="showContent('خدمات الطباعة','للوصول إلى سياسات الطباعة والإرشادات ونماذج الطلب، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">🖨️ خدمات الطباعة</button>
+
             <details open>
                 <summary>📥 النماذج والموارد</summary>
-                <button onclick="showContent('قالب ورقة العمل','أضيفي رابط قالب ورقة العمل هنا.')">قالب ورقة العمل</button>
-                <button onclick="showContent('نموذج طلب الطباعة','أضيفي رابط نموذج طلب الطباعة هنا.')">نموذج طلب الطباعة</button>
-                <button onclick="showContent('تحميل الخطوط','أضيفي روابط تحميل الخطوط هنا.')">تحميل الخطوط</button>
-                <button onclick="showContent('دليل تثبيت الخطوط','أضيفي دليل تثبيت الخطوط هنا.')">دليل تثبيت الخطوط</button>
-                <button onclick="showContent('شعارات المدرسة','أضيفي ملفات شعارات المدرسة هنا.')">شعارات المدرسة</button>
-                <button onclick="showContent('التقويم الأكاديمي','أضيفي رابط التقويم الأكاديمي هنا.')">التقويم الأكاديمي</button>
+                <button onclick="showContent('قالب ورقة العمل','للوصول إلى قالب ورقة العمل، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">قالب ورقة العمل</button>
+                <button onclick="showContent('نموذج طلب الطباعة','للوصول إلى نموذج طلب الطباعة، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">نموذج طلب الطباعة</button>
+                <button onclick="showContent('تحميل الخطوط','للوصول إلى تحميل الخطوط، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">تحميل الخطوط</button>
+                <button onclick="showContent('دليل تثبيت الخطوط','للوصول إلى دليل تثبيت الخطوط، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">دليل تثبيت الخطوط</button>
+                <button onclick="showContent('شعارات المدرسة','للوصول إلى شعارات المدرسة، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">شعارات المدرسة</button>
+                <button onclick="showContent('التقويم الأكاديمي','للوصول إلى التقويم الأكاديمي، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">التقويم الأكاديمي</button>
             </details>
-            <button onclick="showContent('خدمات بطاقة الموظف','سيتم عرض سياسة بطاقة الموظف وإجراءات الطلب هنا.')">🪪 خدمات بطاقة الموظف</button>
-            <button onclick="showContent('القرطاسية والكتب','سيتم عرض إرشادات طلب القرطاسية والكتب هنا.')">📚 القرطاسية والكتب</button>
-            <button onclick="showContent('خدمات الصيانة','سيتم عرض إجراءات طلب الصيانة هنا.')">🔧 خدمات الصيانة</button>
+
+            <button onclick="showContent('خدمات بطاقة الموظف','للوصول إلى تعليمات وخدمات بطاقة الموظف، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">🪪 خدمات بطاقة الموظف</button>
+            <button onclick="showContent('القرطاسية والكتب','للوصول إلى معلومات طلب القرطاسية والكتب، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">📚 القرطاسية والكتب</button>
+            <button onclick="showContent('خدمات الصيانة','للوصول إلى إجراءات وخدمات الصيانة، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">🔧 خدمات الصيانة</button>
         </div>
+
         <div class="content-area">
             <h3 id="contentTitle-ar">الخدمات الإدارية</h3>
             <p id="contentText-ar">اختاري عنصرًا من القائمة الجانبية.</p>
-            <a id="contentLink-ar" class="resource-btn" href="#">فتح الرابط</a>
+            <a id="contentLink-ar" class="resource-btn" href="#" target="_blank">فتح الرابط</a>
         </div>
     </div>
 </div>
@@ -383,29 +340,38 @@ Some resources are restricted and may not be accessible from personal email acco
     <h2>Teacher's Hub</h2>
     <div class="layout">
         <div class="sidebar">
-            <button onclick="showContent('Curriculum Resources','Add curriculum resource links here.')">📚 Curriculum Resources</button>
-            <button onclick="showContent('IB PYP Resources','Add IB PYP resource links here.')">🌍 IB PYP Resources</button>
+            <button onclick="showContent('Curriculum Resources','To access curriculum resources, please click the link below. Please ensure that your browser is logged in using your official school email account.')">📚 Curriculum Resources</button>
+            <button onclick="showContent('IB PYP Resources','To access IB PYP resources, please click the link below. Please ensure that your browser is logged in using your official school email account.')">🌍 IB PYP Resources</button>
+
             <details open>
                 <summary>📝 Assessment & Reporting</summary>
-                <button onclick="showContent('Grading Marksheets','Add grading marksheet link and video here.')">Grading Marksheets</button>
-                <button onclick="showContent('Test Templates','Add test template link and video here.')">Test Templates</button>
-                <button onclick="showContent('Exam Templates','Add exam template link and video here.')">Exam Templates</button>
-                <button onclick="showContent('Performance Indicators','Add performance indicator link and video here.')">Performance Indicators</button>
-                <button onclick="showContent('Assessment Guidelines','Add assessment guidelines here.')">Assessment Guidelines</button>
-                <button onclick="showContent('Report Card Resources','Add report card resources here.')">Report Card Resources</button>
+                <button onclick="showContent('Grading Marksheets','To access grading marksheets, please click the link below. Please ensure that your browser is logged in using your official school email account.')">Grading Marksheets</button>
+                <button onclick="showContent('Test Templates','To access test templates, please click the link below. Please ensure that your browser is logged in using your official school email account.')">Test Templates</button>
+                <button onclick="showContent('Exam Templates','To access exam templates, please click the link below. Please ensure that your browser is logged in using your official school email account.')">Exam Templates</button>
+                <button onclick="showContent('Performance Indicators','To access performance indicators, please click the link below. Please ensure that your browser is logged in using your official school email account.')">Performance Indicators</button>
+                <button onclick="showContent('Assessment Guidelines','To access assessment guidelines, please click the link below. Please ensure that your browser is logged in using your official school email account.')">Assessment Guidelines</button>
+                <button onclick="showContent('Report Card Resources','To access report card resources, please click the link below. Please ensure that your browser is logged in using your official school email account.')">Report Card Resources</button>
             </details>
+
             <details>
                 <summary>📊 MAP Growth</summary>
-                <button onclick="showContent('MAP Growth Schedule','Add MAP Growth schedule here.')">MAP Growth Schedule</button>
-                <button onclick="showContent('MAP Growth Results','Add MAP Growth results link here.')">MAP Growth Results</button>
-                <button onclick="showContent('MAP Resources','Add MAP resources here.')">MAP Resources</button>
+                <button onclick="showContent('MAP Growth Schedule','To access the MAP Growth schedule, please click the link below. Please ensure that your browser is logged in using your official school email account.')">MAP Growth Schedule</button>
+                <button onclick="showContent('MAP Growth Results','To access MAP Growth results, please click the link below. Please ensure that your browser is logged in using your official school email account.')">MAP Growth Results</button>
+                <button onclick="showContent('MAP Resources','To access MAP resources, please click the link below. Please ensure that your browser is logged in using your official school email account.')">MAP Resources</button>
+            </details>
+
+            <details>
+                <summary>📂 Lesson Planning Resources</summary>
+                <button onclick="showContent('Lesson Plan Templates','To access lesson plan templates, please click the link below. Please ensure that your browser is logged in using your official school email account.')">Lesson Plan Templates</button>
+                <button onclick="showContent('Weekly Plan Templates','To access weekly plan templates, please click the link below. Please ensure that your browser is logged in using your official school email account.')">Weekly Plan Templates</button>
+                <button onclick="showContent('Observation Templates','To access observation templates, please click the link below. Please ensure that your browser is logged in using your official school email account.')">Observation Templates</button>
             </details>
         </div>
+
         <div class="content-area">
             <h3 id="contentTitle-en">Teacher's Hub</h3>
             <p id="contentText-en">Select an item from the left menu.</p>
-            <a id="contentLink-en" class="resource-btn" href="#">Open Link</a>
-            <iframe src=""></iframe>
+            <a id="contentLink-en" class="resource-btn" href="#" target="_blank">Open Link</a>
         </div>
     </div>
 </div>
@@ -414,29 +380,38 @@ Some resources are restricted and may not be accessible from personal email acco
     <h2>بوابة المعلم</h2>
     <div class="layout">
         <div class="sidebar">
-            <button onclick="showContent('موارد المنهج','أضيفي روابط موارد المنهج هنا.')">📚 موارد المنهج</button>
-            <button onclick="showContent('موارد IB PYP','أضيفي روابط موارد IB PYP هنا.')">🌍 موارد IB PYP</button>
+            <button onclick="showContent('موارد المنهج','للوصول إلى موارد المنهج، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">📚 موارد المنهج</button>
+            <button onclick="showContent('موارد IB PYP','للوصول إلى موارد IB PYP، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">🌍 موارد IB PYP</button>
+
             <details open>
                 <summary>📝 التقييم والتقارير</summary>
-                <button onclick="showContent('كشوف الدرجات','أضيفي رابط كشف الدرجات والفيديو هنا.')">كشوف الدرجات</button>
-                <button onclick="showContent('قوالب الاختبار','أضيفي رابط قالب الاختبار والفيديو هنا.')">قوالب الاختبار</button>
-                <button onclick="showContent('قوالب الامتحان','أضيفي رابط قالب الامتحان والفيديو هنا.')">قوالب الامتحان</button>
-                <button onclick="showContent('مؤشرات الأداء','أضيفي رابط مؤشرات الأداء والفيديو هنا.')">مؤشرات الأداء</button>
-                <button onclick="showContent('إرشادات التقييم','أضيفي إرشادات التقييم هنا.')">إرشادات التقييم</button>
-                <button onclick="showContent('موارد بطاقة التقرير','أضيفي موارد بطاقة التقرير هنا.')">موارد بطاقة التقرير</button>
+                <button onclick="showContent('كشوف الدرجات','للوصول إلى كشوف الدرجات، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">كشوف الدرجات</button>
+                <button onclick="showContent('قوالب الاختبار','للوصول إلى قوالب الاختبار، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">قوالب الاختبار</button>
+                <button onclick="showContent('قوالب الامتحان','للوصول إلى قوالب الامتحان، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">قوالب الامتحان</button>
+                <button onclick="showContent('مؤشرات الأداء','للوصول إلى مؤشرات الأداء، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">مؤشرات الأداء</button>
+                <button onclick="showContent('إرشادات التقييم','للوصول إلى إرشادات التقييم، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">إرشادات التقييم</button>
+                <button onclick="showContent('موارد بطاقة التقرير','للوصول إلى موارد بطاقة التقرير، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">موارد بطاقة التقرير</button>
             </details>
+
             <details>
                 <summary>📊 MAP Growth</summary>
-                <button onclick="showContent('جدول MAP Growth','أضيفي جدول MAP Growth هنا.')">جدول MAP Growth</button>
-                <button onclick="showContent('نتائج MAP Growth','أضيفي رابط نتائج MAP Growth هنا.')">نتائج MAP Growth</button>
-                <button onclick="showContent('موارد MAP','أضيفي موارد MAP هنا.')">موارد MAP</button>
+                <button onclick="showContent('جدول MAP Growth','للوصول إلى جدول MAP Growth، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">جدول MAP Growth</button>
+                <button onclick="showContent('نتائج MAP Growth','للوصول إلى نتائج MAP Growth، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">نتائج MAP Growth</button>
+                <button onclick="showContent('موارد MAP','للوصول إلى موارد MAP، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">موارد MAP</button>
+            </details>
+
+            <details>
+                <summary>📂 موارد تخطيط الدروس</summary>
+                <button onclick="showContent('قوالب خطط الدروس','للوصول إلى قوالب خطط الدروس، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">قوالب خطط الدروس</button>
+                <button onclick="showContent('قوالب الخطة الأسبوعية','للوصول إلى قوالب الخطة الأسبوعية، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">قوالب الخطة الأسبوعية</button>
+                <button onclick="showContent('قوالب الملاحظة الصفية','للوصول إلى قوالب الملاحظة الصفية، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">قوالب الملاحظة الصفية</button>
             </details>
         </div>
+
         <div class="content-area">
             <h3 id="contentTitle-ar">بوابة المعلم</h3>
             <p id="contentText-ar">اختاري عنصرًا من القائمة الجانبية.</p>
-            <a id="contentLink-ar" class="resource-btn" href="#">فتح الرابط</a>
-            <iframe src=""></iframe>
+            <a id="contentLink-ar" class="resource-btn" href="#" target="_blank">فتح الرابط</a>
         </div>
     </div>
 </div>
