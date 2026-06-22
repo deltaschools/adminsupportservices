@@ -186,9 +186,10 @@ function showSection(id) {
 }
 
 function showContent(title, text, link = "#") {
-    document.getElementById("contentTitle-" + lang).innerText = title;
-    document.getElementById("contentText-" + lang).innerText = text;
-    document.getElementById("contentLink-" + lang).href = link;
+    let activeSection = document.querySelector(".section.active");
+    activeSection.querySelector(".content-title").innerText = title;
+    activeSection.querySelector(".content-text").innerText = text;
+    activeSection.querySelector(".content-link").href = link;
 }
 </script>
 </head>
@@ -248,15 +249,22 @@ function showContent(title, text, link = "#") {
     <h2>Announcements</h2>
     <div class="layout">
         <div class="sidebar">
-            <button onclick="showContent('General Announcements','Stay informed with the latest school-wide announcements, updates, reminders, and important notices. Please click the link below to view current announcements. Please ensure that your browser is logged in using your official school email account.')">📌 General Announcements</button>
+            <button onclick="showContent(
+                'General Announcements',
+                'Stay informed with the latest school-wide announcements, updates, reminders, and important notices. Please click the link below to view current announcements. Please ensure that your browser is logged in using your official school email account.',
+                'https://sites.google.com/delta.edu.sa/deltaprint/general-announcements'
+            )">📌 General Announcements</button>
 
-            <button onclick="showContent('Important Dates & Deadlines','To access the latest schedules, deadlines, and important academic dates, please click the link below. Please ensure that your browser is logged in using your official school email account.')">📅 Important Dates & Deadlines</button>
+            <button onclick="showContent(
+                'Important Dates & Deadlines',
+                'To access the latest schedules, deadlines, and important academic dates, please click the link below. Please ensure that your browser is logged in using your official school email account.'
+            )">📅 Important Dates & Deadlines</button>
         </div>
 
         <div class="content-area">
-            <h3 id="contentTitle-en">Announcements</h3>
-            <p id="contentText-en">Select an item from the left menu.</p>
-            <a id="contentLink-en" class="resource-btn" href="#" target="_blank">Open Link</a>
+            <h3 class="content-title">Announcements</h3>
+            <p class="content-text">Select an item from the left menu.</p>
+            <a class="resource-btn content-link" href="#" target="_blank">Open Link</a>
         </div>
     </div>
 </div>
@@ -265,15 +273,22 @@ function showContent(title, text, link = "#") {
     <h2>الإعلانات</h2>
     <div class="layout">
         <div class="sidebar">
-            <button onclick="showContent('الإعلانات العامة','ابقَ على اطلاع بآخر الإعلانات المدرسية والتحديثات والتنبيهات والإشعارات المهمة. يرجى الضغط على الرابط أدناه لعرض الإعلانات الحالية. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">📌 الإعلانات العامة</button>
+            <button onclick="showContent(
+                'الإعلانات العامة',
+                'ابقَ على اطلاع بآخر الإعلانات المدرسية والتحديثات والتنبيهات والإشعارات المهمة. يرجى الضغط على الرابط أدناه لعرض الإعلانات الحالية. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.',
+                'https://sites.google.com/delta.edu.sa/deltaprint/general-announcements'
+            )">📌 الإعلانات العامة</button>
 
-            <button onclick="showContent('التواريخ والمواعيد المهمة','للوصول إلى أحدث الجداول الزمنية والمواعيد النهائية والتواريخ الأكاديمية المهمة، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.')">📅 التواريخ والمواعيد المهمة</button>
+            <button onclick="showContent(
+                'التواريخ والمواعيد المهمة',
+                'للوصول إلى أحدث الجداول الزمنية والمواعيد النهائية والتواريخ الأكاديمية المهمة، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.'
+            )">📅 التواريخ والمواعيد المهمة</button>
         </div>
 
         <div class="content-area">
-            <h3 id="contentTitle-ar">الإعلانات</h3>
-            <p id="contentText-ar">اختاري عنصرًا من القائمة الجانبية.</p>
-            <a id="contentLink-ar" class="resource-btn" href="#" target="_blank">فتح الرابط</a>
+            <h3 class="content-title">الإعلانات</h3>
+            <p class="content-text">اختاري عنصرًا من القائمة الجانبية.</p>
+            <a class="resource-btn content-link" href="#" target="_blank">فتح الرابط</a>
         </div>
     </div>
 </div>
@@ -282,7 +297,10 @@ function showContent(title, text, link = "#") {
     <h2>Administrative Services</h2>
     <div class="layout">
         <div class="sidebar">
-            <button onclick="showContent('Printing Services','To access printing policies, guidelines, and request forms, please click the link below. Please ensure that your browser is logged in using your official school email account.')">🖨️ Printing Services</button>
+            <button onclick="showContent(
+                'Printing Services',
+                'To access printing policies, guidelines, and request forms, please click the link below. Please ensure that your browser is logged in using your official school email account.'
+            )">🖨️ Printing Services</button>
 
             <details open>
                 <summary>📥 Forms & Resources</summary>
@@ -300,9 +318,9 @@ function showContent(title, text, link = "#") {
         </div>
 
         <div class="content-area">
-            <h3 id="contentTitle-en">Administrative Services</h3>
-            <p id="contentText-en">Select an item from the left menu.</p>
-            <a id="contentLink-en" class="resource-btn" href="#" target="_blank">Open Link</a>
+            <h3 class="content-title">Administrative Services</h3>
+            <p class="content-text">Select an item from the left menu.</p>
+            <a class="resource-btn content-link" href="#" target="_blank">Open Link</a>
         </div>
     </div>
 </div>
@@ -329,9 +347,9 @@ function showContent(title, text, link = "#") {
         </div>
 
         <div class="content-area">
-            <h3 id="contentTitle-ar">الخدمات الإدارية</h3>
-            <p id="contentText-ar">اختاري عنصرًا من القائمة الجانبية.</p>
-            <a id="contentLink-ar" class="resource-btn" href="#" target="_blank">فتح الرابط</a>
+            <h3 class="content-title">الخدمات الإدارية</h3>
+            <p class="content-text">اختاري عنصرًا من القائمة الجانبية.</p>
+            <a class="resource-btn content-link" href="#" target="_blank">فتح الرابط</a>
         </div>
     </div>
 </div>
@@ -369,9 +387,9 @@ function showContent(title, text, link = "#") {
         </div>
 
         <div class="content-area">
-            <h3 id="contentTitle-en">Teacher's Hub</h3>
-            <p id="contentText-en">Select an item from the left menu.</p>
-            <a id="contentLink-en" class="resource-btn" href="#" target="_blank">Open Link</a>
+            <h3 class="content-title">Teacher's Hub</h3>
+            <p class="content-text">Select an item from the left menu.</p>
+            <a class="resource-btn content-link" href="#" target="_blank">Open Link</a>
         </div>
     </div>
 </div>
@@ -409,9 +427,9 @@ function showContent(title, text, link = "#") {
         </div>
 
         <div class="content-area">
-            <h3 id="contentTitle-ar">بوابة المعلم</h3>
-            <p id="contentText-ar">اختاري عنصرًا من القائمة الجانبية.</p>
-            <a id="contentLink-ar" class="resource-btn" href="#" target="_blank">فتح الرابط</a>
+            <h3 class="content-title">بوابة المعلم</h3>
+            <p class="content-text">اختاري عنصرًا من القائمة الجانبية.</p>
+            <a class="resource-btn content-link" href="#" target="_blank">فتح الرابط</a>
         </div>
     </div>
 </div>
