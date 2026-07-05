@@ -97,8 +97,19 @@
 
         .qr {
             width: 220px;
-            margin: 20px 0;
+            margin: 20px 0 10px;
             border-radius: 10px;
+        }
+
+        .form-link a {
+            color: #0f4c81;
+            font-weight: bold;
+            text-decoration: none;
+            word-break: break-word;
+        }
+
+        .form-link a:hover {
+            text-decoration: underline;
         }
 
         input {
@@ -134,12 +145,18 @@
 
                 document.getElementById('header-en').style.display = 'none';
                 document.getElementById('header-ar').style.display = 'block';
+
+                document.getElementById('link-en').style.display = 'none';
+                document.getElementById('link-ar').style.display = 'block';
             } else {
                 document.getElementById('en').style.display = 'block';
                 document.getElementById('ar').style.display = 'none';
 
                 document.getElementById('header-en').style.display = 'block';
                 document.getElementById('header-ar').style.display = 'none';
+
+                document.getElementById('link-en').style.display = 'block';
+                document.getElementById('link-ar').style.display = 'none';
             }
         }
 
@@ -180,22 +197,44 @@
     <div class="box">
 
         <div id="en">
-            <div class="big-welcome">Welcome on board</div>
+            <div class="big-welcome">Welcome On Board</div>
+
             <p>
-                To obtain the access password, please scan the QR code and complete the Google Form with the required information.
+                To obtain the access password, please scan the QR code or click the link below and complete the Google Form with the required information.
             </p>
-            <p><strong>Scan QR Code</strong></p>
+
+            <p><strong>Scan the QR Code</strong></p>
         </div>
 
         <div id="ar" class="arabic" style="display:none;">
             <div class="big-welcome">مرحبًا بكم</div>
+
             <p>
-                للحصول على كلمة المرور، يرجى مسح رمز الاستجابة السريعة وتعبئة نموذج جوجل بالبيانات المطلوبة.
+                للحصول على كلمة المرور، يرجى مسح رمز الاستجابة السريعة أو الضغط على الرابط أدناه، ثم تعبئة نموذج Google بالبيانات المطلوبة.
             </p>
+
             <p><strong>امسح رمز الاستجابة السريعة</strong></p>
         </div>
 
         <img src="qr.png" alt="QR Code" class="qr">
+
+        <div id="link-en" class="form-link">
+            <p>
+                <strong>Google Form Link</strong><br>
+                <a href="https://forms.gle/hF6Yze5XLiJFjh5F8" target="_blank">
+                    https://forms.gle/hF6Yze5XLiJFjh5F8
+                </a>
+            </p>
+        </div>
+
+        <div id="link-ar" class="form-link arabic" style="display:none;">
+            <p>
+                <strong>رابط نموذج Google</strong><br>
+                <a href="https://forms.gle/hF6Yze5XLiJFjh5F8" target="_blank" style="direction:ltr;display:inline-block;">
+                    https://forms.gle/hF6Yze5XLiJFjh5F8
+                </a>
+            </p>
+        </div>
 
         <input type="password" id="pass" placeholder="Enter password / أدخل كلمة المرور"><br>
         <button class="enter-btn" onclick="checkPassword()">Enter / دخول</button>
