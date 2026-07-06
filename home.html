@@ -34,10 +34,10 @@ h2,h3{color:#001f4d;}
 </style>
 
 <script>
-let lang = "en";
+let lang="en";
 
 function setLanguage(l){
-    lang = l;
+    lang=l;
     document.querySelectorAll(".en").forEach(e=>e.style.display=l==="en"?"block":"none");
     document.querySelectorAll(".ar").forEach(e=>e.style.display=l==="ar"?"block":"none");
     showSection("home");
@@ -108,13 +108,13 @@ function showContent(title,text,link="#",tutorial=""){
 <div id="home-en" class="section active">
 <h2>Home</h2>
 <p>Welcome to the Admin Support Services platform. Use the navigation menu to access announcements, services, and teacher resources.</p>
-<p>Please ensure that your browser is logged in using your official school email account before accessing any links, forms, schedules, or documents.</p>
+<p><strong>Please ensure that your browser is logged in using your official school email account before accessing any links, forms, schedules, or documents.</strong></p>
 </div>
 
 <div id="home-ar" class="section arabic">
 <h2>الرئيسية</h2>
 <p>مرحبًا بكم في منصة خدمات الدعم الإداري. يرجى استخدام القائمة للوصول إلى الإعلانات والخدمات وموارد المعلمين.</p>
-<p>يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة قبل الوصول إلى أي روابط أو نماذج أو جداول أو مستندات.</p>
+<p><strong>يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة قبل الوصول إلى أي روابط أو نماذج أو جداول أو مستندات.</strong></p>
 </div>
 
 <div id="announcements-en" class="section">
@@ -127,7 +127,7 @@ function showContent(title,text,link="#",tutorial=""){
 <div class="content-area">
 <h3 class="content-title">Announcements</h3>
 <p class="content-text">Select an item from the left menu.</p>
-<a class="resource-btn content-link" href="#" target="_blank">Open Link</a>
+<a class="resource-btn content-link" href="#" target="_blank" style="display:none;">Open Link</a>
 <a class="resource-btn tutorial-link" href="#" target="_blank" style="display:none;">Watch Tutorial</a>
 </div>
 </div>
@@ -143,7 +143,7 @@ function showContent(title,text,link="#",tutorial=""){
 <div class="content-area">
 <h3 class="content-title">الإعلانات</h3>
 <p class="content-text">اختاري عنصرًا من القائمة الجانبية.</p>
-<a class="resource-btn content-link" href="#" target="_blank">فتح الرابط</a>
+<a class="resource-btn content-link" href="#" target="_blank" style="display:none;">فتح الرابط</a>
 <a class="resource-btn tutorial-link" href="#" target="_blank" style="display:none;">مشاهدة الشرح</a>
 </div>
 </div>
@@ -153,29 +153,29 @@ function showContent(title,text,link="#",tutorial=""){
 <h2>Administrative Services</h2>
 <div class="layout">
 <div class="sidebar">
-<button onclick="showContent('Printing Services','To access printing services, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/printing-request-form')">🖨️ Printing Services</button>
+<button onclick="showContent('Printing Services','To access printing services, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/printing-request-form')">🖨️ Printing Services</button>
 
 <details open>
 <summary>📥 Forms & Resources</summary>
-<button onclick="showContent('Worksheet Template','To access the worksheet template, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/worksheet-template','https://sites.google.com/delta.edu.sa/deltaprint/worksheet-template')">Worksheet Template</button>
-<button onclick="showContent('Exam / Test Template','To access the exam/test template, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/exam-test-template','https://sites.google.com/delta.edu.sa/deltaprint/exam-test-template')">Exam / Test Template</button>
-<button onclick="showContent('Printing Request Form','To access the printing request form, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/printing-request-form')">Printing Request Form</button>
-<button onclick="showContent('Font Downloads','To access font downloads, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/font-downloads')">Font Downloads</button>
-<button onclick="showContent('Font Installation Guide','To access the font installation guide, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/font-installation-guide','https://sites.google.com/delta.edu.sa/deltaprint/font-installation-guide')">Font Installation Guide</button>
-<button onclick="showContent('School Logo','To access school logos, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/school-logo')">School Logo</button>
-<button onclick="showContent('Academic Calendar','To access the academic calendar, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/academic-calendar')">Academic Calendar</button>
+<button onclick="showContent('Worksheet Template','To access the worksheet template, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/worksheet-template','https://sites.google.com/delta.edu.sa/deltaprint/worksheet-template')">Worksheet Template</button>
+<button onclick="showContent('Exam / Test Template','To access the exam/test template, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/exam-test-template','https://sites.google.com/delta.edu.sa/deltaprint/exam-test-template')">Exam / Test Template</button>
+<button onclick="showContent('Printing Request Form','To access the printing request form, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/printing-request-form')">Printing Request Form</button>
+<button onclick="showContent('Font Downloads','To access font downloads, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/font-downloads')">Font Downloads</button>
+<button onclick="showContent('Font Installation Guide','To access the font installation guide, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/font-installation-guide','https://sites.google.com/delta.edu.sa/deltaprint/font-installation-guide')">Font Installation Guide</button>
+<button onclick="showContent('School Logo','To access school logos, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/school-logo')">School Logo</button>
+<button onclick="showContent('Academic Calendar','To access the academic calendar, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/academic-calendar')">Academic Calendar</button>
 </details>
 
-<button onclick="showContent('Employee ID Policy & Procedures','To access employee ID policy and procedures, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/employee-id-policy-procedures')">🪪 Employee ID Policy & Procedures</button>
-<button onclick="showContent('Stationery and Books','To access stationery and books information, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/stationery-and-books')">📚 Stationery and Books</button>
-<button onclick="showContent('Maintenance Services','To access maintenance services, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/maintenance-services')">🔧 Maintenance Services</button>
-<button onclick="showContent('Assessment Guidelines','To access assessment guidelines, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/assessment-guidelines')">📝 Assessment Guidelines</button>
+<button onclick="showContent('Employee ID Policy & Procedures','To access employee ID policy and procedures, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/employee-id-policy-procedures')">🪪 Employee ID Policy & Procedures</button>
+<button onclick="showContent('Stationery and Books','To access stationery and books information, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/stationery-and-books')">📚 Stationery and Books</button>
+<button onclick="showContent('Maintenance Services','To access maintenance services, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/maintenance-services')">🔧 Maintenance Services</button>
+<button onclick="showContent('Assessment Guidelines','To access assessment guidelines, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/assessment-guidelines')">📝 Assessment Guidelines</button>
 </div>
 
 <div class="content-area">
 <h3 class="content-title">Administrative Services</h3>
-<p class="content-text">Select an item from the left menu.</p>
-<a class="resource-btn content-link" href="#" target="_blank">Open Link</a>
+<p class="content-text">Select an item from the left menu.<br><br><strong>Please ensure that your browser is logged in using your official school email account before accessing any links or resources.</strong></p>
+<a class="resource-btn content-link" href="#" target="_blank" style="display:none;">Open Link</a>
 <a class="resource-btn tutorial-link" href="#" target="_blank" style="display:none;">Watch Tutorial</a>
 </div>
 </div>
@@ -185,29 +185,29 @@ function showContent(title,text,link="#",tutorial=""){
 <h2>الخدمات الإدارية</h2>
 <div class="layout">
 <div class="sidebar">
-<button onclick="showContent('خدمات الطباعة','للوصول إلى خدمات الطباعة، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/printing-request-form')">🖨️ خدمات الطباعة</button>
+<button onclick="showContent('خدمات الطباعة','للوصول إلى خدمات الطباعة، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/printing-request-form')">🖨️ خدمات الطباعة</button>
 
 <details open>
 <summary>📥 النماذج والموارد</summary>
-<button onclick="showContent('قالب ورقة العمل','للوصول إلى قالب ورقة العمل، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/worksheet-template','https://sites.google.com/delta.edu.sa/deltaprint/worksheet-template')">قالب ورقة العمل</button>
-<button onclick="showContent('قالب الاختبار / الامتحان','للوصول إلى قالب الاختبار / الامتحان، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/exam-test-template','https://sites.google.com/delta.edu.sa/deltaprint/exam-test-template')">قالب الاختبار / الامتحان</button>
-<button onclick="showContent('نموذج طلب الطباعة','للوصول إلى نموذج طلب الطباعة، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/printing-request-form')">نموذج طلب الطباعة</button>
-<button onclick="showContent('تحميل الخطوط','للوصول إلى تحميل الخطوط، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/font-downloads')">تحميل الخطوط</button>
-<button onclick="showContent('دليل تثبيت الخطوط','للوصول إلى دليل تثبيت الخطوط، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/font-installation-guide','https://sites.google.com/delta.edu.sa/deltaprint/font-installation-guide')">دليل تثبيت الخطوط</button>
-<button onclick="showContent('شعار المدرسة','للوصول إلى شعار المدرسة، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/school-logo')">شعار المدرسة</button>
-<button onclick="showContent('التقويم الأكاديمي','للوصول إلى التقويم الأكاديمي، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/academic-calendar')">التقويم الأكاديمي</button>
+<button onclick="showContent('قالب ورقة العمل','للوصول إلى قالب ورقة العمل، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/worksheet-template','https://sites.google.com/delta.edu.sa/deltaprint/worksheet-template')">قالب ورقة العمل</button>
+<button onclick="showContent('قالب الاختبار / الامتحان','للوصول إلى قالب الاختبار / الامتحان، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/exam-test-template','https://sites.google.com/delta.edu.sa/deltaprint/exam-test-template')">قالب الاختبار / الامتحان</button>
+<button onclick="showContent('نموذج طلب الطباعة','للوصول إلى نموذج طلب الطباعة، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/printing-request-form')">نموذج طلب الطباعة</button>
+<button onclick="showContent('تحميل الخطوط','للوصول إلى تحميل الخطوط، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/font-downloads')">تحميل الخطوط</button>
+<button onclick="showContent('دليل تثبيت الخطوط','للوصول إلى دليل تثبيت الخطوط، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/font-installation-guide','https://sites.google.com/delta.edu.sa/deltaprint/font-installation-guide')">دليل تثبيت الخطوط</button>
+<button onclick="showContent('شعار المدرسة','للوصول إلى شعار المدرسة، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/school-logo')">شعار المدرسة</button>
+<button onclick="showContent('التقويم الأكاديمي','للوصول إلى التقويم الأكاديمي، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/academic-calendar')">التقويم الأكاديمي</button>
 </details>
 
-<button onclick="showContent('سياسة وإجراءات بطاقة الموظف','للوصول إلى سياسة وإجراءات بطاقة الموظف، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/employee-id-policy-procedures')">🪪 سياسة وإجراءات بطاقة الموظف</button>
-<button onclick="showContent('القرطاسية والكتب','للوصول إلى معلومات القرطاسية والكتب، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/stationery-and-books')">📚 القرطاسية والكتب</button>
-<button onclick="showContent('خدمات الصيانة','للوصول إلى خدمات الصيانة، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/maintenance-services')">🔧 خدمات الصيانة</button>
-<button onclick="showContent('إرشادات التقييم','للوصول إلى إرشادات التقييم، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/assessment-guidelines')">📝 إرشادات التقييم</button>
+<button onclick="showContent('سياسة وإجراءات بطاقة الموظف','للوصول إلى سياسة وإجراءات بطاقة الموظف، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/employee-id-policy-procedures')">🪪 سياسة وإجراءات بطاقة الموظف</button>
+<button onclick="showContent('القرطاسية والكتب','للوصول إلى معلومات القرطاسية والكتب، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/stationery-and-books')">📚 القرطاسية والكتب</button>
+<button onclick="showContent('خدمات الصيانة','للوصول إلى خدمات الصيانة، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/maintenance-services')">🔧 خدمات الصيانة</button>
+<button onclick="showContent('إرشادات التقييم','للوصول إلى إرشادات التقييم، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/assessment-guidelines')">📝 إرشادات التقييم</button>
 </div>
 
 <div class="content-area">
 <h3 class="content-title">الخدمات الإدارية</h3>
-<p class="content-text">اختاري عنصرًا من القائمة الجانبية.</p>
-<a class="resource-btn content-link" href="#" target="_blank">فتح الرابط</a>
+<p class="content-text">يرجى اختيار أحد العناصر من القائمة الجانبية.<br><br><strong>يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة قبل الوصول إلى أي رابط أو مورد.</strong></p>
+<a class="resource-btn content-link" href="#" target="_blank" style="display:none;">فتح الرابط</a>
 <a class="resource-btn tutorial-link" href="#" target="_blank" style="display:none;">مشاهدة الشرح</a>
 </div>
 </div>
@@ -217,27 +217,27 @@ function showContent(title,text,link="#",tutorial=""){
 <h2>International Teacher's Hub</h2>
 <div class="layout">
 <div class="sidebar">
-<button onclick="showContent('Curriculum Resources','To access curriculum resources, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/curriculum-resources')">📚 Curriculum Resources</button>
-<button onclick="showContent('IB PYP Resources','To access IB PYP resources, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/ib-pyp-resources')">🌍 IB PYP Resources</button>
+<button onclick="showContent('Curriculum Resources','To access curriculum resources, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/curriculum-resources')">📚 Curriculum Resources</button>
+<button onclick="showContent('IB PYP Resources','To access IB PYP resources, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/ib-pyp-resources')">🌍 IB PYP Resources</button>
 
 <details open>
 <summary>📝 Assessment & Reporting</summary>
-<button onclick="showContent('Grading Marksheets','To access grading marksheets, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/grading-marksheets','https://sites.google.com/delta.edu.sa/deltaprint/grading-marksheets')">Grading Marksheets</button>
-<button onclick="showContent('Performance Indicators','To access performance indicators, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators','https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators')">Performance Indicators</button>
+<button onclick="showContent('Grading Marksheets','To access grading marksheets, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/grading-marksheets','https://sites.google.com/delta.edu.sa/deltaprint/grading-marksheets')">Grading Marksheets</button>
+<button onclick="showContent('Performance Indicators','To access performance indicators, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators','https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators')">Performance Indicators</button>
 </details>
 
 <details>
 <summary>📊 MAP Growth</summary>
-<button onclick="showContent('MAP Growth Test Schedule','To access the MAP Growth test schedule, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-test-schedule')">MAP Growth Test Schedule</button>
-<button onclick="showContent('MAP Growth Test Results','To access MAP Growth test results, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-test-results')">MAP Growth Test Results</button>
-<button onclick="showContent('MAP Growth Resources','To access MAP Growth resources, please click the link below.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-resources')">MAP Growth Resources</button>
+<button onclick="showContent('MAP Growth Test Schedule','To access the MAP Growth test schedule, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-test-schedule')">MAP Growth Test Schedule</button>
+<button onclick="showContent('MAP Growth Test Results','To access MAP Growth test results, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-test-results')">MAP Growth Test Results</button>
+<button onclick="showContent('MAP Growth Resources','To access MAP Growth resources, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-resources')">MAP Growth Resources</button>
 </details>
 </div>
 
 <div class="content-area">
 <h3 class="content-title">International Teacher's Hub</h3>
-<p class="content-text">Select an item from the left menu.</p>
-<a class="resource-btn content-link" href="#" target="_blank">Open Link</a>
+<p class="content-text">Select an item from the left menu.<br><br><strong>Please ensure that your browser is logged in using your official school email account before accessing any links or resources.</strong></p>
+<a class="resource-btn content-link" href="#" target="_blank" style="display:none;">Open Link</a>
 <a class="resource-btn tutorial-link" href="#" target="_blank" style="display:none;">Watch Tutorial</a>
 </div>
 </div>
@@ -247,27 +247,27 @@ function showContent(title,text,link="#",tutorial=""){
 <h2>بوابة معلمي القسم العالمي</h2>
 <div class="layout">
 <div class="sidebar">
-<button onclick="showContent('موارد المنهج','للوصول إلى موارد المنهج، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/curriculum-resources')">📚 موارد المنهج</button>
-<button onclick="showContent('موارد IB PYP','للوصول إلى موارد IB PYP، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/ib-pyp-resources')">🌍 موارد IB PYP</button>
+<button onclick="showContent('موارد المنهج','للوصول إلى موارد المنهج، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/curriculum-resources')">📚 موارد المنهج</button>
+<button onclick="showContent('موارد IB PYP','للوصول إلى موارد IB PYP، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/ib-pyp-resources')">🌍 موارد IB PYP</button>
 
 <details open>
 <summary>📝 التقييم والتقارير</summary>
-<button onclick="showContent('كشوف الدرجات','للوصول إلى كشوف الدرجات، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/grading-marksheets','https://sites.google.com/delta.edu.sa/deltaprint/grading-marksheets')">كشوف الدرجات</button>
-<button onclick="showContent('مؤشرات الأداء','للوصول إلى مؤشرات الأداء، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators','https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators')">مؤشرات الأداء</button>
+<button onclick="showContent('كشوف الدرجات','للوصول إلى كشوف الدرجات، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/grading-marksheets','https://sites.google.com/delta.edu.sa/deltaprint/grading-marksheets')">كشوف الدرجات</button>
+<button onclick="showContent('مؤشرات الأداء','للوصول إلى مؤشرات الأداء، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators','https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators')">مؤشرات الأداء</button>
 </details>
 
 <details>
 <summary>📊 MAP Growth</summary>
-<button onclick="showContent('جدول اختبار MAP Growth','للوصول إلى جدول اختبار MAP Growth، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-test-schedule')">جدول اختبار MAP Growth</button>
-<button onclick="showContent('نتائج اختبار MAP Growth','للوصول إلى نتائج اختبار MAP Growth، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-test-results')">نتائج اختبار MAP Growth</button>
-<button onclick="showContent('موارد MAP Growth','للوصول إلى موارد MAP Growth، يرجى الضغط على الرابط أدناه.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-resources')">موارد MAP Growth</button>
+<button onclick="showContent('جدول اختبار MAP Growth','للوصول إلى جدول اختبار MAP Growth، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-test-schedule')">جدول اختبار MAP Growth</button>
+<button onclick="showContent('نتائج اختبار MAP Growth','للوصول إلى نتائج اختبار MAP Growth، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-test-results')">نتائج اختبار MAP Growth</button>
+<button onclick="showContent('موارد MAP Growth','للوصول إلى موارد MAP Growth، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-resources')">موارد MAP Growth</button>
 </details>
 </div>
 
 <div class="content-area">
 <h3 class="content-title">بوابة معلمي القسم العالمي</h3>
-<p class="content-text">اختاري عنصرًا من القائمة الجانبية.</p>
-<a class="resource-btn content-link" href="#" target="_blank">فتح الرابط</a>
+<p class="content-text">يرجى اختيار أحد العناصر من القائمة الجانبية.<br><br><strong>يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة قبل الوصول إلى أي رابط أو مورد.</strong></p>
+<a class="resource-btn content-link" href="#" target="_blank" style="display:none;">فتح الرابط</a>
 <a class="resource-btn tutorial-link" href="#" target="_blank" style="display:none;">مشاهدة الشرح</a>
 </div>
 </div>
