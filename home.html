@@ -31,6 +31,26 @@ h2,h3{color:#001f4d;}
 .arabic{font-family:GEDinar,Tahoma,Arial,sans-serif;direction:rtl;text-align:right;font-weight:bold;}
 .arabic .sidebar{border-right:none;border-left:4px solid #001f4d;padding-right:0;padding-left:15px;}
 .arabic .sidebar button{text-align:right;}
+
+.browser-notice{
+    margin-top:22px;
+    padding:16px 18px;
+    border-radius:12px;
+    background:#fff8e1;
+    border-left:6px solid #d4af37;
+    color:#333;
+    line-height:1.7;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+.browser-notice strong{
+    color:#001f4d;
+}
+.arabic .browser-notice{
+    border-left:none;
+    border-right:6px solid #d4af37;
+    text-align:right;
+}
+
 </style>
 
 <script>
@@ -50,17 +70,40 @@ function showSection(id){
 
 function showContent(title,text,link="#",tutorial=""){
     let active=document.querySelector(".section.active");
+
     active.querySelector(".content-title").innerText=title;
     active.querySelector(".content-text").innerText=text;
 
     let openBtn=active.querySelector(".content-link");
-    openBtn.href=link;
-    openBtn.style.display=link==="#"?"none":"inline-block";
+
+    if(link==="#"){
+        openBtn.style.display="none";
+        openBtn.removeAttribute("href");
+        openBtn.onclick=null;
+    }else{
+        openBtn.style.display="inline-block";
+        openBtn.href=link;
+        openBtn.onclick=function(event){
+            event.preventDefault();
+            window.location.assign(link);
+        };
+    }
 
     let tutorialBtn=active.querySelector(".tutorial-link");
+
     if(tutorialBtn){
-        tutorialBtn.href=tutorial;
-        tutorialBtn.style.display=tutorial===""?"none":"inline-block";
+        if(tutorial===""){
+            tutorialBtn.style.display="none";
+            tutorialBtn.removeAttribute("href");
+            tutorialBtn.onclick=null;
+        }else{
+            tutorialBtn.style.display="inline-block";
+            tutorialBtn.href=tutorial;
+            tutorialBtn.onclick=function(event){
+                event.preventDefault();
+                window.location.assign(tutorial);
+            };
+        }
     }
 }
 </script>
@@ -109,12 +152,24 @@ function showContent(title,text,link="#",tutorial=""){
 <h2>Home</h2>
 <p>Welcome to the Admin Support Services platform. Use the navigation menu to access announcements, services, and teacher resources.</p>
 <p><strong>Please ensure that your browser is logged in using your official school email account before accessing any links, forms, schedules, or documents.</strong></p>
+
+<div class="browser-notice">
+<strong>🌐 Recommended Browser</strong><br><br>
+For the best experience and full compatibility with Google Sites, Google Drive, Google Forms, and other Google Workspace resources, it is recommended to use <strong>Google Chrome</strong> while signed in with your official Delta Schools email account.
+</div>
+
 </div>
 
 <div id="home-ar" class="section arabic">
 <h2>الرئيسية</h2>
 <p>مرحبًا بكم في منصة خدمات الدعم الإداري. يرجى استخدام القائمة للوصول إلى الإعلانات والخدمات وموارد المعلمين.</p>
 <p><strong>يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة قبل الوصول إلى أي روابط أو نماذج أو جداول أو مستندات.</strong></p>
+
+<div class="browser-notice">
+<strong>🌐 المتصفح الموصى به</strong><br><br>
+للحصول على أفضل تجربة وضمان التوافق الكامل مع مواقع Google وGoogle Drive ونماذج Google وبقية خدمات Google Workspace، يُوصى باستخدام <strong>متصفح Google Chrome</strong> مع تسجيل الدخول باستخدام البريد الإلكتروني الرسمي لمدارس دلتا.
+</div>
+
 </div>
 
 <div id="announcements-en" class="section">
@@ -127,8 +182,8 @@ function showContent(title,text,link="#",tutorial=""){
 <div class="content-area">
 <h3 class="content-title">Announcements</h3>
 <p class="content-text">Select an item from the left menu.</p>
-<a class="resource-btn content-link" href="#" target="_blank" style="display:none;">Open Link</a>
-<a class="resource-btn tutorial-link" href="#" target="_blank" style="display:none;">Watch Tutorial</a>
+<a class="resource-btn content-link" href="#" style="display:none;">Open Link</a>
+<a class="resource-btn tutorial-link" href="#" style="display:none;">Watch Tutorial</a>
 </div>
 </div>
 </div>
@@ -143,8 +198,8 @@ function showContent(title,text,link="#",tutorial=""){
 <div class="content-area">
 <h3 class="content-title">الإعلانات</h3>
 <p class="content-text">اختاري عنصرًا من القائمة الجانبية.</p>
-<a class="resource-btn content-link" href="#" target="_blank" style="display:none;">فتح الرابط</a>
-<a class="resource-btn tutorial-link" href="#" target="_blank" style="display:none;">مشاهدة الشرح</a>
+<a class="resource-btn content-link" href="#" style="display:none;">فتح الرابط</a>
+<a class="resource-btn tutorial-link" href="#" style="display:none;">مشاهدة الشرح</a>
 </div>
 </div>
 </div>
@@ -175,8 +230,8 @@ function showContent(title,text,link="#",tutorial=""){
 <div class="content-area">
 <h3 class="content-title">Administrative Services</h3>
 <p class="content-text">Select an item from the left menu.<br><br><strong>Please ensure that your browser is logged in using your official school email account before accessing any links or resources.</strong></p>
-<a class="resource-btn content-link" href="#" target="_blank" style="display:none;">Open Link</a>
-<a class="resource-btn tutorial-link" href="#" target="_blank" style="display:none;">Watch Tutorial</a>
+<a class="resource-btn content-link" href="#" style="display:none;">Open Link</a>
+<a class="resource-btn tutorial-link" href="#" style="display:none;">Watch Tutorial</a>
 </div>
 </div>
 </div>
@@ -207,8 +262,8 @@ function showContent(title,text,link="#",tutorial=""){
 <div class="content-area">
 <h3 class="content-title">الخدمات الإدارية</h3>
 <p class="content-text">يرجى اختيار أحد العناصر من القائمة الجانبية.<br><br><strong>يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة قبل الوصول إلى أي رابط أو مورد.</strong></p>
-<a class="resource-btn content-link" href="#" target="_blank" style="display:none;">فتح الرابط</a>
-<a class="resource-btn tutorial-link" href="#" target="_blank" style="display:none;">مشاهدة الشرح</a>
+<a class="resource-btn content-link" href="#" style="display:none;">فتح الرابط</a>
+<a class="resource-btn tutorial-link" href="#" style="display:none;">مشاهدة الشرح</a>
 </div>
 </div>
 </div>
