@@ -92,14 +92,14 @@ function showContent(title,text,link="#",tutorial=""){
 <button onclick="showSection('home')">🏠 HOME</button>
 <button onclick="showSection('announcements')">📢 ANNOUNCEMENTS</button>
 <button onclick="showSection('admin')">🏢 ADMINISTRATIVE SERVICES</button>
-<button onclick="showSection('hub')">🎓 INTERNATIONAL TEACHER'S HUB</button>
+<button onclick="window.location.href='international-login.html'">🎓 INTERNATIONAL TEACHER'S HUB 🔒</button>
 </div>
 
 <div class="ar arabic" style="display:none;">
 <button onclick="showSection('home')">🏠 الرئيسية</button>
 <button onclick="showSection('announcements')">📢 الإعلانات</button>
 <button onclick="showSection('admin')">🏢 الخدمات الإدارية</button>
-<button onclick="showSection('hub')">🎓 بوابة معلمي القسم العالمي</button>
+<button onclick="window.location.href='international-login.html'">🎓 بوابة معلمي القسم العالمي 🔒</button>
 </div>
 </nav>
 
@@ -213,65 +213,6 @@ function showContent(title,text,link="#",tutorial=""){
 </div>
 </div>
 
-<div id="hub-en" class="section">
-<h2>International Teacher's Hub</h2>
-<div class="layout">
-<div class="sidebar">
-<button onclick="showContent('Curriculum Resources','To access curriculum resources, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/curriculum-resources')">📚 Curriculum Resources</button>
-<button onclick="showContent('IB PYP Resources','To access IB PYP resources, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/ib-pyp-resources')">🌍 IB PYP Resources</button>
-
-<details open>
-<summary>📝 Assessment & Reporting</summary>
-<button onclick="showContent('Grading Marksheets','To access grading marksheets, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/grading-marksheets','https://sites.google.com/delta.edu.sa/deltaprint/grading-marksheets')">Grading Marksheets</button>
-<button onclick="showContent('Performance Indicators','To access performance indicators, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators','https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators')">Performance Indicators</button>
-</details>
-
-<details>
-<summary>📊 MAP Growth</summary>
-<button onclick="showContent('MAP Growth Test Schedule','To access the MAP Growth test schedule, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-test-schedule')">MAP Growth Test Schedule</button>
-<button onclick="showContent('MAP Growth Test Results','To access MAP Growth test results, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-test-results')">MAP Growth Test Results</button>
-<button onclick="showContent('MAP Growth Resources','To access MAP Growth resources, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-resources')">MAP Growth Resources</button>
-</details>
-</div>
-
-<div class="content-area">
-<h3 class="content-title">International Teacher's Hub</h3>
-<p class="content-text">Select an item from the left menu.<br><br><strong>Please ensure that your browser is logged in using your official school email account before accessing any links or resources.</strong></p>
-<a class="resource-btn content-link" href="#" target="_blank" style="display:none;">Open Link</a>
-<a class="resource-btn tutorial-link" href="#" target="_blank" style="display:none;">Watch Tutorial</a>
-</div>
-</div>
-</div>
-
-<div id="hub-ar" class="section arabic">
-<h2>بوابة معلمي القسم العالمي</h2>
-<div class="layout">
-<div class="sidebar">
-<button onclick="showContent('موارد المنهج','للوصول إلى موارد المنهج، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/curriculum-resources')">📚 موارد المنهج</button>
-<button onclick="showContent('موارد IB PYP','للوصول إلى موارد IB PYP، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/ib-pyp-resources')">🌍 موارد IB PYP</button>
-
-<details open>
-<summary>📝 التقييم والتقارير</summary>
-<button onclick="showContent('كشوف الدرجات','للوصول إلى كشوف الدرجات، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/grading-marksheets','https://sites.google.com/delta.edu.sa/deltaprint/grading-marksheets')">كشوف الدرجات</button>
-<button onclick="showContent('مؤشرات الأداء','للوصول إلى مؤشرات الأداء، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators','https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators')">مؤشرات الأداء</button>
-</details>
-
-<details>
-<summary>📊 MAP Growth</summary>
-<button onclick="showContent('جدول اختبار MAP Growth','للوصول إلى جدول اختبار MAP Growth، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-test-schedule')">جدول اختبار MAP Growth</button>
-<button onclick="showContent('نتائج اختبار MAP Growth','للوصول إلى نتائج اختبار MAP Growth، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-test-results')">نتائج اختبار MAP Growth</button>
-<button onclick="showContent('موارد MAP Growth','للوصول إلى موارد MAP Growth، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/map-growth-resources')">موارد MAP Growth</button>
-</details>
-</div>
-
-<div class="content-area">
-<h3 class="content-title">بوابة معلمي القسم العالمي</h3>
-<p class="content-text">يرجى اختيار أحد العناصر من القائمة الجانبية.<br><br><strong>يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة قبل الوصول إلى أي رابط أو مورد.</strong></p>
-<a class="resource-btn content-link" href="#" target="_blank" style="display:none;">فتح الرابط</a>
-<a class="resource-btn tutorial-link" href="#" target="_blank" style="display:none;">مشاهدة الشرح</a>
-</div>
-</div>
-</div>
 
 </div>
 </body>
