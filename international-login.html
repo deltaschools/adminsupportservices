@@ -11,7 +11,7 @@
 </style>
 <script>
 function setLanguage(lang){const ar=lang==='ar';document.documentElement.lang=ar?'ar':'en';document.getElementById('header-en').style.display=ar?'none':'block';document.getElementById('header-ar').style.display=ar?'block':'none';document.getElementById('content-en').style.display=ar?'none':'block';document.getElementById('content-ar').style.display=ar?'block':'none';document.getElementById('internationalPassword').placeholder=ar?'أدخل كلمة مرور القسم العالمي':'Enter International Section password';document.getElementById('enterButton').textContent=ar?'دخول':'Enter';document.getElementById('backButton').textContent=ar?'العودة إلى البوابة الرئيسية':'Back to Main Portal';document.getElementById('errorMessage').textContent=ar?'كلمة المرور غير صحيحة.':'Incorrect password.';document.getElementById('errorMessage').style.display='none'}
-function checkInternationalPassword(){const p=document.getElementById('internationalPassword').value.trim();if(p==='CHANGE_THIS_PASSWORD'){window.location.href='teacherhub.html'}else{document.getElementById('errorMessage').style.display='block'}}
+function checkInternationalPassword(){const p=document.getElementById('internationalPassword').value.trim();if(p==='DISINT2026'){window.location.href='teacherhub.html'}else{document.getElementById('errorMessage').style.display='block'}}
 function handlePasswordKey(e){if(e.key==='Enter')checkInternationalPassword()}
 </script>
 </head>
