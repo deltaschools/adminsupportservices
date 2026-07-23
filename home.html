@@ -51,6 +51,26 @@ h2,h3{color:#001f4d;}
     text-align:right;
 }
 
+
+.video-wrapper{
+    display:none;
+    position:relative;
+    width:100%;
+    max-width:760px;
+    margin:18px auto 24px;
+    padding-top:56.25%;
+    overflow:hidden;
+    border-radius:14px;
+    background:#000;
+    box-shadow:0 8px 20px rgba(0,0,0,.18);
+}
+.video-wrapper iframe{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    border:0;
+}
 </style>
 
 <script>
@@ -68,14 +88,26 @@ function showSection(id){
     document.getElementById(id+"-"+lang).classList.add("active");
 }
 
-function showContent(title,text,link="#",tutorial=""){
+function getYouTubeEmbedUrl(url){
+    if(!url) return "";
+    if(url.includes("youtube.com/embed/")) return url;
+    if(url.includes("youtu.be/")){
+        return "https://www.youtube.com/embed/" + url.split("youtu.be/")[1].split(/[?&]/)[0];
+    }
+    if(url.includes("youtube.com/watch")){
+        const videoId = new URL(url).searchParams.get("v");
+        return videoId ? "https://www.youtube.com/embed/" + videoId : "";
+    }
+    return url;
+}
+
+function showContent(title,text,link="#",tutorial="",embedVideo=false){
     let active=document.querySelector(".section.active");
 
     active.querySelector(".content-title").innerText=title;
     active.querySelector(".content-text").innerText=text;
 
     let openBtn=active.querySelector(".content-link");
-
     if(link==="#"){
         openBtn.style.display="none";
         openBtn.removeAttribute("href");
@@ -89,14 +121,26 @@ function showContent(title,text,link="#",tutorial=""){
     }
 
     let tutorialBtn=active.querySelector(".tutorial-link");
+    let videoWrapper=active.querySelector(".video-wrapper");
+    let videoFrame=active.querySelector(".video-frame");
+
+    if(videoWrapper && videoFrame){
+        videoWrapper.style.display="none";
+        videoFrame.src="";
+    }
 
     if(tutorialBtn){
-        if(tutorial===""){
-            tutorialBtn.style.display="none";
-            tutorialBtn.removeAttribute("href");
-            tutorialBtn.removeAttribute("target");
-            tutorialBtn.removeAttribute("rel");
-        }else{
+        tutorialBtn.style.display="none";
+        tutorialBtn.removeAttribute("href");
+        tutorialBtn.removeAttribute("target");
+        tutorialBtn.removeAttribute("rel");
+    }
+
+    if(tutorial!==""){
+        if(embedVideo && videoWrapper && videoFrame){
+            videoFrame.src=getYouTubeEmbedUrl(tutorial);
+            videoWrapper.style.display="block";
+        }else if(tutorialBtn){
             tutorialBtn.style.display="inline-block";
             tutorialBtn.href=tutorial;
             tutorialBtn.target="_blank";
@@ -182,6 +226,11 @@ For the best experience and full compatibility with Google Sites, Google Drive, 
 <p class="content-text">Select an item from the left menu.</p>
 <a class="resource-btn content-link" href="#" style="display:none;">Open Link</a>
 <a class="resource-btn tutorial-link" href="#" style="display:none;">Watch Tutorial</a>
+<div class="video-wrapper">
+<iframe class="video-frame" title="Instructional Video"
+allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+allowfullscreen></iframe>
+</div>
 </div>
 </div>
 </div>
@@ -198,6 +247,11 @@ For the best experience and full compatibility with Google Sites, Google Drive, 
 <p class="content-text">اختاري عنصرًا من القائمة الجانبية.</p>
 <a class="resource-btn content-link" href="#" style="display:none;">فتح الرابط</a>
 <a class="resource-btn tutorial-link" href="#" style="display:none;">مشاهدة الشرح</a>
+<div class="video-wrapper">
+<iframe class="video-frame" title="الفيديو الإرشادي"
+allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+allowfullscreen></iframe>
+</div>
 </div>
 </div>
 </div>
@@ -206,13 +260,18 @@ For the best experience and full compatibility with Google Sites, Google Drive, 
 <h2>Administrative Services</h2>
 <div class="layout">
 <div class="sidebar">
-<button onclick="showContent('Printing Services','To access printing services, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/printing-request-form')">🖨️ Printing Services</button>
+<button onclick="showContent(
+'Printing Services Policy',
+'Please review the Printing Services Policy before submitting any printing request. Click Open Link to view the policy document. The English instructional video is provided below. Please ensure that your browser is logged in using your official school email account.',
+'https://sites.google.com/delta.edu.sa/deltaprint/printing-services-policy',
+'https://youtu.be/nGXbwChnfpA',
+true
+)">🖨️ Printing Services Policy</button>
 
 <details open>
 <summary>📥 Forms & Resources</summary>
 <button onclick="showContent('Worksheet Template','To access the worksheet template, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/worksheet-template','https://sites.google.com/delta.edu.sa/deltaprint/worksheet-template')">Worksheet Template</button>
 <button onclick="showContent('Exam / Test Template','To access the exam/test template, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/exam-test-template','https://sites.google.com/delta.edu.sa/deltaprint/exam-test-template')">Exam / Test Template</button>
-<button onclick="showContent('Printing Request Form','To access the printing request form, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/printing-request-form')">Printing Request Form</button>
 <button onclick="showContent('Font Downloads','To access font downloads, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/font-downloads')">Font Downloads</button>
 <button onclick="showContent('Font Installation Guide','To access the font installation guide, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/font-installation-guide','https://sites.google.com/delta.edu.sa/deltaprint/font-installation-guide')">Font Installation Guide</button>
 <button onclick="showContent('School Logo','To access school logos, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/school-logo')">School Logo</button>
@@ -230,6 +289,11 @@ For the best experience and full compatibility with Google Sites, Google Drive, 
 <p class="content-text">Select an item from the left menu.<br><br><strong>Please ensure that your browser is logged in using your official school email account before accessing any links or resources.</strong></p>
 <a class="resource-btn content-link" href="#" style="display:none;">Open Link</a>
 <a class="resource-btn tutorial-link" href="#" style="display:none;">Watch Tutorial</a>
+<div class="video-wrapper">
+<iframe class="video-frame" title="Instructional Video"
+allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+allowfullscreen></iframe>
+</div>
 </div>
 </div>
 </div>
@@ -238,13 +302,18 @@ For the best experience and full compatibility with Google Sites, Google Drive, 
 <h2>الخدمات الإدارية</h2>
 <div class="layout">
 <div class="sidebar">
-<button onclick="showContent('خدمات الطباعة','للوصول إلى خدمات الطباعة، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/printing-request-form')">🖨️ خدمات الطباعة</button>
+<button onclick="showContent(
+'سياسة خدمات الطباعة',
+'يرجى الاطلاع على سياسة خدمات الطباعة قبل تقديم أي طلب طباعة. اضغط على فتح الرابط لعرض وثيقة السياسة. يتوفر الفيديو الإرشادي باللغة العربية أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.',
+'https://sites.google.com/delta.edu.sa/deltaprint/printing-services-policy',
+'https://youtu.be/xmGk4agmNXM',
+true
+)">🖨️ سياسة خدمات الطباعة</button>
 
 <details open>
 <summary>📥 النماذج والموارد</summary>
 <button onclick="showContent('قالب ورقة العمل','للوصول إلى قالب ورقة العمل، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/worksheet-template','https://sites.google.com/delta.edu.sa/deltaprint/worksheet-template')">قالب ورقة العمل</button>
 <button onclick="showContent('قالب الاختبار / الامتحان','للوصول إلى قالب الاختبار / الامتحان، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/exam-test-template','https://sites.google.com/delta.edu.sa/deltaprint/exam-test-template')">قالب الاختبار / الامتحان</button>
-<button onclick="showContent('نموذج طلب الطباعة','للوصول إلى نموذج طلب الطباعة، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/printing-request-form')">نموذج طلب الطباعة</button>
 <button onclick="showContent('تحميل الخطوط','للوصول إلى تحميل الخطوط، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/font-downloads')">تحميل الخطوط</button>
 <button onclick="showContent('دليل تثبيت الخطوط','للوصول إلى دليل تثبيت الخطوط، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/font-installation-guide','https://sites.google.com/delta.edu.sa/deltaprint/font-installation-guide')">دليل تثبيت الخطوط</button>
 <button onclick="showContent('شعار المدرسة','للوصول إلى شعار المدرسة، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/school-logo')">شعار المدرسة</button>
@@ -262,6 +331,11 @@ For the best experience and full compatibility with Google Sites, Google Drive, 
 <p class="content-text">يرجى اختيار أحد العناصر من القائمة الجانبية.<br><br><strong>يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة قبل الوصول إلى أي رابط أو مورد.</strong></p>
 <a class="resource-btn content-link" href="#" style="display:none;">فتح الرابط</a>
 <a class="resource-btn tutorial-link" href="#" style="display:none;">مشاهدة الشرح</a>
+<div class="video-wrapper">
+<iframe class="video-frame" title="الفيديو الإرشادي"
+allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+allowfullscreen></iframe>
+</div>
 </div>
 </div>
 </div>
