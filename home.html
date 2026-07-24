@@ -52,8 +52,15 @@ h2,h3{color:#001f4d;}
 }
 
 
-.video-wrapper{
+.video-list{
     display:none;
+    width:100%;
+    margin-top:18px;
+}
+.video-list.active{
+    display:block;
+}
+.video-wrapper{
     position:relative;
     width:100%;
     max-width:1000px;
@@ -121,12 +128,11 @@ function showContent(title,text,link="#",tutorial="",embedVideo=false){
     }
 
     let tutorialBtn=active.querySelector(".tutorial-link");
-    let videoWrapper=active.querySelector(".video-wrapper");
-    let videoFrame=active.querySelector(".video-frame");
+    let videoList=active.querySelector(".video-list");
 
-    if(videoWrapper && videoFrame){
-        videoWrapper.style.display="none";
-        videoFrame.src="";
+    if(videoList){
+        videoList.classList.remove("active");
+        videoList.innerHTML="";
     }
 
     if(tutorialBtn){
@@ -137,9 +143,25 @@ function showContent(title,text,link="#",tutorial="",embedVideo=false){
     }
 
     if(tutorial!==""){
-        if(embedVideo && videoWrapper && videoFrame){
-            videoFrame.src=getYouTubeEmbedUrl(tutorial);
-            videoWrapper.style.display="block";
+        if(embedVideo && videoList){
+            let videos=Array.isArray(tutorial) ? tutorial : [tutorial];
+
+            videos.forEach(function(videoUrl,index){
+                let wrapper=document.createElement("div");
+                wrapper.className="video-wrapper";
+
+                let frame=document.createElement("iframe");
+                frame.className="video-frame";
+                frame.title=(lang==="ar" ? "الفيديو الإرشادي " : "Instructional Video ") + (index+1);
+                frame.src=getYouTubeEmbedUrl(videoUrl);
+                frame.allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+                frame.allowFullscreen=true;
+
+                wrapper.appendChild(frame);
+                videoList.appendChild(wrapper);
+            });
+
+            videoList.classList.add("active");
         }else if(tutorialBtn){
             tutorialBtn.style.display="inline-block";
             tutorialBtn.href=tutorial;
@@ -226,11 +248,7 @@ For the best experience and full compatibility with Google Sites, Google Drive, 
 <p class="content-text">Select an item from the left menu.</p>
 <a class="resource-btn content-link" href="#" style="display:none;">Open Link</a>
 <a class="resource-btn tutorial-link" href="#" style="display:none;">Watch Tutorial</a>
-<div class="video-wrapper">
-<iframe class="video-frame" title="Instructional Video"
-allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-allowfullscreen></iframe>
-</div>
+<div class="video-list"></div>
 </div>
 </div>
 </div>
@@ -247,11 +265,7 @@ allowfullscreen></iframe>
 <p class="content-text">اختاري عنصرًا من القائمة الجانبية.</p>
 <a class="resource-btn content-link" href="#" style="display:none;">فتح الرابط</a>
 <a class="resource-btn tutorial-link" href="#" style="display:none;">مشاهدة الشرح</a>
-<div class="video-wrapper">
-<iframe class="video-frame" title="الفيديو الإرشادي"
-allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-allowfullscreen></iframe>
-</div>
+<div class="video-list"></div>
 </div>
 </div>
 </div>
@@ -285,7 +299,16 @@ true
 </details>
 
 <button onclick="showContent('Employee ID Policy & Procedures','To access employee ID policy and procedures, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/employee-id-policy-procedures')">🪪 Employee ID Policy & Procedures</button>
-<button onclick="showContent('Stationery and Books','To access stationery and books information, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/stationery-and-books')">📚 Stationery and Books</button>
+<button onclick="showContent(
+'Stationery and Books',
+'Please click Open Link to access the Stationery and Books page. Two English instructional videos are provided below. Please ensure that your browser is logged in using your official school email account.',
+'https://sites.google.com/delta.edu.sa/deltaprint/stationery-and-books',
+[
+'https://youtu.be/GyWaltNzxGI?si=qlImgVa6y8DrvrFZ',
+'https://youtu.be/pRwvSfL4uGk?si=rrgBtedcEDaTB5df'
+],
+true
+)">📚 Stationery and Books</button>
 <button onclick="showContent('Maintenance Services','To access maintenance services, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/maintenance-services')">🔧 Maintenance Services</button>
 <button onclick="showContent('Assessment Guidelines','To access assessment guidelines, please click the link below. Please ensure that your browser is logged in using your official school email account.','https://sites.google.com/delta.edu.sa/deltaprint/assessment-guidelines')">📝 Assessment Guidelines</button>
 </div>
@@ -295,11 +318,7 @@ true
 <p class="content-text">Select an item from the left menu.<br><br><strong>Please ensure that your browser is logged in using your official school email account before accessing any links or resources.</strong></p>
 <a class="resource-btn content-link" href="#" style="display:none;">Open Link</a>
 <a class="resource-btn tutorial-link" href="#" style="display:none;">Watch Tutorial</a>
-<div class="video-wrapper">
-<iframe class="video-frame" title="Instructional Video"
-allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-allowfullscreen></iframe>
-</div>
+<div class="video-list"></div>
 </div>
 </div>
 </div>
@@ -333,7 +352,15 @@ true
 </details>
 
 <button onclick="showContent('سياسة وإجراءات بطاقة الموظف','للوصول إلى سياسة وإجراءات بطاقة الموظف، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/employee-id-policy-procedures')">🪪 سياسة وإجراءات بطاقة الموظف</button>
-<button onclick="showContent('القرطاسية والكتب','للوصول إلى معلومات القرطاسية والكتب، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/stationery-and-books')">📚 القرطاسية والكتب</button>
+<button onclick="showContent(
+'القرطاسية والكتب',
+'اضغط على زر فتح الرابط للوصول إلى صفحة القرطاسية والكتب. يتوفر الفيديو الإرشادي باللغة العربية أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.',
+'https://sites.google.com/delta.edu.sa/deltaprint/stationery-and-books',
+[
+'https://youtu.be/CrDQw-umqew?si=t18KDvSKFGRufg6d'
+],
+true
+)">📚 القرطاسية والكتب</button>
 <button onclick="showContent('خدمات الصيانة','للوصول إلى خدمات الصيانة، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/maintenance-services')">🔧 خدمات الصيانة</button>
 <button onclick="showContent('إرشادات التقييم','للوصول إلى إرشادات التقييم، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.','https://sites.google.com/delta.edu.sa/deltaprint/assessment-guidelines')">📝 إرشادات التقييم</button>
 </div>
@@ -343,11 +370,7 @@ true
 <p class="content-text">يرجى اختيار أحد العناصر من القائمة الجانبية.<br><br><strong>يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة قبل الوصول إلى أي رابط أو مورد.</strong></p>
 <a class="resource-btn content-link" href="#" style="display:none;">فتح الرابط</a>
 <a class="resource-btn tutorial-link" href="#" style="display:none;">مشاهدة الشرح</a>
-<div class="video-wrapper">
-<iframe class="video-frame" title="الفيديو الإرشادي"
-allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-allowfullscreen></iframe>
-</div>
+<div class="video-list"></div>
 </div>
 </div>
 </div>
