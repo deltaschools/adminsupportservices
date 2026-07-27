@@ -37,6 +37,27 @@ h2,h3{color:#001f4d}
     .sidebar,.arabic .sidebar{width:100%;border:0;border-bottom:4px solid #001f4d;padding:0 0 15px}
     .container{margin:20px 12px;padding:20px}
 }
+
+.video-wrapper{
+    display:none;
+    position:relative;
+    width:100%;
+    max-width:1000px;
+    margin:18px auto 24px;
+    padding-top:56.25%;
+    overflow:hidden;
+    border-radius:14px;
+    background:#000;
+    box-shadow:0 8px 20px rgba(0,0,0,.18);
+}
+.video-wrapper iframe{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    border:0;
+}
+
 </style>
 <script>
 function setLanguage(lang){
@@ -46,16 +67,50 @@ function setLanguage(lang){
     document.getElementById('hub-en').classList.toggle('active',!ar);
     document.getElementById('hub-ar').classList.toggle('active',ar);
 }
-function showContent(title,text,link,tutorial=''){
+function getYouTubeEmbedUrl(url){
+    if(!url) return "";
+    if(url.includes("youtube.com/embed/")) return url;
+    if(url.includes("youtu.be/")){
+        return "https://www.youtube.com/embed/" + url.split("youtu.be/")[1].split(/[?&]/)[0];
+    }
+    if(url.includes("youtube.com/watch")){
+        const videoId = new URL(url).searchParams.get("v");
+        return videoId ? "https://www.youtube.com/embed/" + videoId : "";
+    }
+    return url;
+}
+
+function showContent(title,text,link,tutorial='',embedVideo=false){
     const p=document.querySelector('.panel.active');
+
     p.querySelector('.content-title').innerText=title;
     p.querySelector('.content-text').innerText=text;
+
     const o=p.querySelector('.content-link');
-    o.href=link;
+    o.href=link || '#';
     o.style.display=link?'inline-block':'none';
+
     const t=p.querySelector('.tutorial-link');
-    t.href=tutorial;
-    t.style.display=tutorial?'inline-block':'none';
+    const videoWrapper=p.querySelector('.video-wrapper');
+    const videoFrame=p.querySelector('.video-frame');
+
+    if(videoWrapper && videoFrame){
+        videoWrapper.style.display='none';
+        videoFrame.src='';
+    }
+
+    t.style.display='none';
+    t.removeAttribute('href');
+
+    if(tutorial){
+        if(embedVideo && videoWrapper && videoFrame){
+            videoFrame.src=getYouTubeEmbedUrl(tutorial);
+            videoWrapper.style.display='block';
+        }else{
+            t.href=tutorial;
+            t.style.display='inline-block';
+        }
+    }
 }
 </script>
 </head>
@@ -117,9 +172,10 @@ function showContent(title,text,link,tutorial=''){
 
 <button onclick="showContent(
 'Performance Indicators',
-'To access performance indicators, please click the link below. Please ensure that your browser is logged in using your official school email account.',
+'To access Performance Indicators, please click the link below. The English instructional video is provided directly below. Please ensure that your browser is logged in using your official school email account.',
 'https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators',
-'https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators'
+'https://youtu.be/wzff-p-Ix7s',
+true
 )">Performance Indicators</button>
 
 <button onclick="showContent(
@@ -159,6 +215,11 @@ function showContent(title,text,link,tutorial=''){
 <p class="content-text">Select an item from the menu on the left.<br><br><strong>Please ensure that your browser is logged in using your official school email account before accessing any links or resources.</strong></p>
 <a class="resource-btn content-link" style="display:none" target="_blank" rel="noopener noreferrer">Open Link</a>
 <a class="resource-btn tutorial-link" style="display:none" target="_blank" rel="noopener noreferrer">Watch Tutorial</a>
+<div class="video-wrapper">
+<iframe class="video-frame" title="Performance Indicators Instructional Video"
+allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+allowfullscreen></iframe>
+</div>
 </div>
 
 </div>
@@ -194,9 +255,10 @@ function showContent(title,text,link,tutorial=''){
 
 <button onclick="showContent(
 'مؤشرات الأداء',
-'للوصول إلى مؤشرات الأداء، يرجى الضغط على الرابط أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.',
+'للوصول إلى مؤشرات الأداء، يرجى الضغط على الرابط أدناه. يتوفر الفيديو الإرشادي باللغة العربية مباشرةً أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.',
 'https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators',
-'https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators'
+'https://youtu.be/r_Bj1B9YqDE',
+true
 )">مؤشرات الأداء</button>
 
 <button onclick="showContent(
@@ -236,6 +298,11 @@ function showContent(title,text,link,tutorial=''){
 <p class="content-text">يرجى اختيار أحد العناصر من القائمة الجانبية.<br><br><strong>يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة قبل الوصول إلى أي رابط أو مورد.</strong></p>
 <a class="resource-btn content-link" style="display:none" target="_blank" rel="noopener noreferrer">فتح الرابط</a>
 <a class="resource-btn tutorial-link" style="display:none" target="_blank" rel="noopener noreferrer">مشاهدة الشرح</a>
+<div class="video-wrapper">
+<iframe class="video-frame" title="الفيديو الإرشادي لمؤشرات الأداء"
+allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+allowfullscreen></iframe>
+</div>
 </div>
 
 </div>
