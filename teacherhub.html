@@ -23,6 +23,14 @@ nav a{display:inline-block;border:2px solid #d4af37;padding:12px 22px;margin:6px
 .sidebar details{margin-bottom:10px}
 .sidebar summary{background:#001f4d;color:white;padding:12px;border-radius:10px;cursor:pointer;font-weight:bold}
 .sidebar button{display:block;width:95%;margin:8px 0 8px 18px;padding:10px;border-radius:8px;text-align:left}
+.sidebar button.main-system{
+    background:#d4af37;
+    color:#001f4d;
+    border:2px solid #001f4d;
+}
+.sidebar button.main-system:hover{
+    filter:brightness(.97);
+}
 .content-area{flex:1;background:#f7f7f7;padding:25px;border-radius:15px;min-height:350px}
 .resource-btn{display:inline-block;background:#001f4d;color:white;padding:10px 18px;border-radius:20px;text-decoration:none;font-weight:bold;margin:10px 8px 20px 0}
 h2,h3{color:#001f4d}
@@ -171,12 +179,18 @@ function showContent(title,text,link,tutorial='',embedVideo=false){
 )">Grading Marksheets</button>
 
 <button onclick="showContent(
-'Performance Indicators',
-'To access Performance Indicators, please click the link below. The English instructional video is provided directly below. Please ensure that your browser is logged in using your official school email account.',
+'Performance Indicators — Emergency / Plan B',
+'Emergency / Plan B access only. Use this Performance Indicators option only when the main Academic Reporting System is unavailable or when instructed by the System Administrator. Please ensure that your browser is logged in using your official school email account.',
 'https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators',
 'https://youtu.be/wzff-p-Ix7s',
 true
-)">Performance Indicators</button>
+)">⚠️ Performance Indicators — Emergency / Plan B</button>
+
+<button class="main-system" onclick="showContent(
+'Academic Reporting System',
+'Open the new Academic Reporting System for Weekly Performance Indicators, Daily Learning Reports, monitoring, approvals, and report downloads. The existing Performance Indicators link above remains available as the emergency / backup option.',
+'academic-reporting.html'
+)">📊 Academic Reporting System</button>
 
 <button onclick="showContent(
 'Test / Exam Topics & Schedule',
@@ -254,12 +268,18 @@ allowfullscreen></iframe>
 )">كشوف الدرجات</button>
 
 <button onclick="showContent(
-'مؤشرات الأداء',
-'للوصول إلى مؤشرات الأداء، يرجى الضغط على الرابط أدناه. يتوفر الفيديو الإرشادي باللغة العربية مباشرةً أدناه. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.',
+'مؤشرات الأداء — للطوارئ / الخطة البديلة B',
+'للطوارئ / الخطة البديلة B فقط. يرجى استخدام خيار مؤشرات الأداء هذا فقط عند تعذر الوصول إلى نظام التقارير الأكاديمية الرئيسي أو عند توجيهكم بذلك من مسؤول النظام. يرجى التأكد من أن المتصفح مسجل الدخول باستخدام البريد الإلكتروني الرسمي للمدرسة.',
 'https://sites.google.com/delta.edu.sa/deltaprint/performance-indicators',
 'https://youtu.be/r_Bj1B9YqDE',
 true
-)">مؤشرات الأداء</button>
+)">⚠️ مؤشرات الأداء — للطوارئ / الخطة البديلة B</button>
+
+<button class="main-system" onclick="showContent(
+'نظام التقارير الأكاديمية',
+'افتح نظام التقارير الأكاديمية الجديد لإدارة مؤشرات الأداء الأسبوعية، والتقارير اليومية للتعلم، والمتابعة، والمراجعة والاعتماد، وتنزيل التقارير. سيبقى رابط مؤشرات الأداء الحالي أعلاه متاحًا كخيار طوارئ / احتياطي.',
+'academic-reporting.html'
+)">📊 نظام التقارير الأكاديمية</button>
 
 <button onclick="showContent(
 'مواضيع الاختبارات وجدولها',
