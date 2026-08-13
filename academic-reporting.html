@@ -1,1 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academic Reporting System</title>
+<style>
+@font-face{font-family:Sansation;src:url("Sansation-Regular.ttf")}
+@font-face{font-family:GEDinar;src:url("GE-Dinar-Bold.woff")}
+*{box-sizing:border-box}
+body{margin:0;font-family:Sansation,Arial,sans-serif;background:#d4af37;color:#222}
+.lang-switch{position:absolute;top:15px;right:20px}
+.lang-switch button,.sidebar button{background:#001f4d;color:white;border:0;cursor:pointer;font-weight:bold}
+.lang-switch button{padding:8px 15px;border-radius:20px;margin-left:5px}
+header{text-align:center;padding:35px 20px;color:white}
+.logo{width:210px}
+header h1{margin:10px 0 5px;font-size:42px}
+nav{background:#001f4d;text-align:center;padding:15px}
+nav a{display:inline-block;border:2px solid #d4af37;padding:12px 22px;margin:6px;border-radius:25px;background:#001f4d;color:white;text-decoration:none;font-weight:bold}
+.container{max-width:1200px;margin:35px auto;background:white;padding:30px;border-radius:22px;box-shadow:0 10px 25px rgba(0,0,0,.2)}
+.layout{display:flex;gap:25px}
+.sidebar{width:340px;flex-shrink:0;border-right:4px solid #001f4d;padding-right:15px}
+.sidebar details{margin-bottom:10px}
+.sidebar summary{background:#001f4d;color:white;padding:12px;border-radius:10px;cursor:pointer;font-weight:bold}
+.sidebar button{display:block;width:95%;margin:8px 0 8px 18px;padding:10px;border-radius:8px;text-align:left}
+.content-area{flex:1;background:#f7f7f7;padding:25px;border-radius:15px;min-height:430px}
+.resource-btn{display:inline-block;background:#001f4d;color:white;padding:10px 18px;border-radius:20px;text-decoration:none;font-weight:bold;margin:10px 8px 20px 0}
+h2,h3{color:#001f4d}
+.panel{display:none}
+.panel.active{display:block}
+.arabic{font-family:GEDinar,Tahoma,Arial,sans-serif;direction:rtl;text-align:right;font-weight:bold}
+.arabic .sidebar{border-right:0;border-left:4px solid #001f4d;padding-right:0;padding-left:15px}
+.arabic .sidebar button{margin:8px 18px 8px 0;text-align:right}
 
+.info-card{
+  background:white;
+  border:1px solid #ddd;
+  border-radius:14px;
+  padding:16px;
+  margin:14px 0;
+  box-shadow:0 4px 10px rgba(0,0,0,.05)
+}
+.info-card strong{color:#001f4d}
+.status-row{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin:16px 0;
+}
+.status-box{
+  background:white;
+  border-radius:12px;
+  padding:15px;
+  text-align:center;
+  border:1px solid #ddd;
+}
+.status-box .num{font-size:28px;color:#001f4d;font-weight:bold}
+.status-box .label{font-size:13px;color:#555;margin-top:5px}
+.notice{
+  background:#fff7d6;
+  border:1px solid #d4af37;
+  padding:14px 16px;
+  border-radius:12px;
+  margin:12px 0 18px;
+}
+.table-wrap{overflow:auto;background:white;border-radius:12px;border:1px solid #ddd;margin-top:14px}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th,td{padding:11px 12px;border-bottom:1px solid #e4e4e4;text-align:left}
+th{background:#001f4d;color:white}
+.arabic th,.arabic td{text-align:right}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:bold}
+.b-red{background:#fde5e5;color:#a11}
+.b-orange{background:#fff1d6;color:#9a5a00}
+.b-blue{background:#e6efff;color:#184a96}
+.b-green{background:#e4f5ea;color:#18723f}
+.b-purple{background:#f1e8fb;color:#6d3a93}
+
+@media(max-width:800px){
+    .lang-switch{position:static;text-align:center;padding-top:15px}
+    .layout{flex-direction:column}
+    .sidebar,.arabic .sidebar{width:100%;border:0;border-bottom:4px solid #001f4d;padding:0 0 15px}
+    .container{margin:20px 12px;padding:20px}
+    .status-row{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:520px){
+    .status-row{grid-template-columns:1fr}
+}
+</style>
+
+<script>
+function setLanguage(lang){
+    const ar=lang==='ar';
+    document.getElementById('header-en').style.display=ar?'none':'block';
+    document.getElementById('header-ar').style.display=ar?'block':'none';
+    document.getElementById('system-en').classList.toggle('active',!ar);
+    document.getElementById('system-ar').classList.toggle('active',ar);
+}
+
+function showModule(id){
+    const activePanel=document.querySelector('.panel.active');
+    const modules=activePanel.querySelectorAll('.module-content');
+    modules.forEach(m=>m.style.display='none');
+    const target=activePanel.querySelector('#'+id);
+    if(target) target.style.display='block';
+}
+</script>
+</head>
+
+<body onload="setLanguage('en');showModule('en-dashboard')">
+
+<div class="lang-switch">
+<button onclick="setLanguage('en');showModule('en-dashboard')">English</button>
+<button onclick="setLanguage('ar');showModule('ar-dashboard')">العربية</button>
+</div>
+
+<header>
+<img src="logo.png" class="logo" alt="School Logo">
+
+<div id="header-en">
+<h1>Academic Reporting System</h1>
+<p>Performance Indicators & Daily Learning Reports</p>
+</div>
+
+<div id="header-ar" class="arabic" style="display:none">
+<h1>نظام التقارير الأكاديمية</h1>
+<p>مؤشرات الأداء والتقارير اليومية للتعلم</p>
+</div>
+</header>
+
+<nav>
+<a href="teacherhub.html">← Teacher Hub / بوابة المعلمين</a>
+<a href="home.html">🏠 Main Portal / البوابة الرئيسية</a>
+</nav>
+
+<div class="container">
+
+<!-- ENGLISH -->
+<div id="system-en" class="panel active">
+<h2>Academic Reporting System</h2>
+
+<div class="layout">
+<div class="sidebar">
+
+<details open>
+<summary>🏠 Main</summary>
+<button onclick="showModule('en-dashboard')">Dashboard</button>
+</details>
+
+<details open>
+<summary>📝 Performance Indicator</summary>
+<button onclick="showModule('en-pi')">Weekly Performance Indicator</button>
+<button onclick="showModule('en-pimonitor')">PI Monitoring</button>
+</details>
+
+<details open>
+<summary>📅 Daily Learning Report</summary>
+<button onclick="showModule('en-daily')">Today's Daily Report</button>
+<button onclick="showModule('en-dailymonitor')">Daily Report Monitoring</button>
+</details>
+
+<details>
+<summary>✅ Academic Review</summary>
+<button onclick="showModule('en-review')">HOD / Supervisor Review</button>
+</details>
+
+<details>
+<summary>🗓️ Timetable</summary>
+<button onclick="showModule('en-timetable')">Timetable Management</button>
+</details>
+
+<details>
+<summary>📄 Reports</summary>
+<button onclick="showModule('en-pdfs')">PDF Reports</button>
+<button onclick="showModule('en-history')">History & Versions</button>
+</details>
+
+<details>
+<summary>⚙️ Administration</summary>
+<button onclick="showModule('en-admin')">System Administration</button>
+</details>
+
+</div>
+
+<div class="content-area">
+
+<div id="en-dashboard" class="module-content">
+<h3>Dashboard</h3>
+<p>Welcome to the Academic Reporting System. This dashboard will display information based on the employee's role and assigned grades, sections, and subjects.</p>
+
+<div class="notice">
+<strong>Current Development Stage:</strong> Frontend foundation. Live data will be connected to Google Workspace in the next phase.
+</div>
+
+<div class="status-row">
+<div class="status-box"><div class="num">—</div><div class="label">PI Subjects Requiring Action</div></div>
+<div class="status-box"><div class="num">—</div><div class="label">Daily Reports Requiring Action</div></div>
+<div class="status-box"><div class="num">—</div><div class="label">Awaiting Academic Review</div></div>
+<div class="status-box"><div class="num">—</div><div class="label">PDFs Ready to Download</div></div>
+</div>
+
+<div class="info-card">
+<strong>System Principle</strong><br><br>
+Weekly PI = one complete PI per grade containing all applicable subjects.<br>
+Daily Learning Report = actual timetable-period reporting for each grade and section.
+</div>
+</div>
+
+<div id="en-pi" class="module-content" style="display:none">
+<h3>Weekly Performance Indicator</h3>
+<p>The complete weekly PI for the selected grade will appear here. All applicable subjects will be visible. Teachers will be able to edit only the subject(s) assigned to them.</p>
+
+<div class="info-card">
+<strong>Example:</strong><br>
+Grade 1 → Week 1 → Whole PI<br><br>
+English — editable for assigned English teacher<br>
+Mathematics — view only for other teachers<br>
+Science — view only for other teachers<br>
+Arabic — view only for other teachers
+</div>
+</div>
+
+<div id="en-pimonitor" class="module-content" style="display:none">
+<h3>PI Monitoring</h3>
+<p>The dashboard will show both the number and the names of subjects requiring action.</p>
+
+<div class="table-wrap">
+<table>
+<tr><th>Grade</th><th>Required Subjects</th><th>Complete</th><th>Require Action</th><th>Subjects Requiring Action</th></tr>
+<tr><td>Grade 1</td><td>12</td><td>2</td><td><span class="badge b-red">10</span></td><td>Science, Arabic, Islamic Studies, ICT, Art, PE, Music, French, STEAM, Saudi History</td></tr>
+</table>
+</div>
+</div>
+
+<div id="en-daily" class="module-content" style="display:none">
+<h3>Today's Daily Learning Report</h3>
+<p>The parent-facing report follows the actual timetable period order for the selected section.</p>
+
+<div class="table-wrap">
+<table>
+<tr>
+<th>Period</th>
+<th>Subject</th>
+<th>Subject Teacher</th>
+<th>What We Learned Today</th>
+<th>Performance Task</th>
+<th>Practice for Mastery</th>
+</tr>
+<tr>
+<td colspan="6" style="text-align:center;color:#666">Today's timetable-based entries will appear here.</td>
+</tr>
+</table>
+</div>
+</div>
+
+<div id="en-dailymonitor" class="module-content" style="display:none">
+<h3>Daily Report Monitoring</h3>
+<p>The system will identify the exact section, period, subject, or Practice for Mastery entry that is still incomplete.</p>
+</div>
+
+<div id="en-review" class="module-content" style="display:none">
+<h3>HOD / Academic Supervisor Review</h3>
+<p>Only the assigned HOD / Academic Supervisor approves or returns academic records.</p>
+<div class="info-card">
+<strong>Principal:</strong> View only within assigned scope.<br>
+<strong>General Academic Manager:</strong> View all only.<br>
+<strong>Report Personnel:</strong> Access finalized PDFs and download.
+</div>
+</div>
+
+<div id="en-timetable" class="module-content" style="display:none">
+<h3>Timetable Management</h3>
+<p>Timetable scopes, grade ranges, break structures, weekly period totals, and effective weeks will all be configurable.</p>
+<div class="info-card">
+A timetable may cover KG1–KG3, Grade 1–3, Grade 1–6, or any future combination. Nothing is hard-coded.
+</div>
+</div>
+
+<div id="en-pdfs" class="module-content" style="display:none">
+<h3>PDF Reports</h3>
+<p>Approved PI and Daily Learning Report PDFs will be generated automatically and stored in the school's Google Drive.</p>
+</div>
+
+<div id="en-history" class="module-content" style="display:none">
+<h3>History & Versions</h3>
+<p>Approved versions will never be silently overwritten. V1, V2, V3 and historical PDFs will remain traceable.</p>
+</div>
+
+<div id="en-admin" class="module-content" style="display:none">
+<h3>System Administration</h3>
+<p>Authorized administrators will manage employees, assignments, permissions, subjects by grade, academic calendar, timetable versions, and system settings.</p>
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- ARABIC -->
+<div id="system-ar" class="panel arabic">
+<h2>نظام التقارير الأكاديمية</h2>
+
+<div class="layout">
+<div class="sidebar">
+
+<details open>
+<summary>🏠 الرئيسية</summary>
+<button onclick="showModule('ar-dashboard')">لوحة التحكم</button>
+</details>
+
+<details open>
+<summary>📝 مؤشرات الأداء</summary>
+<button onclick="showModule('ar-pi')">مؤشر الأداء الأسبوعي</button>
+<button onclick="showModule('ar-pimonitor')">متابعة مؤشرات الأداء</button>
+</details>
+
+<details open>
+<summary>📅 التقرير اليومي للتعلم</summary>
+<button onclick="showModule('ar-daily')">تقرير اليوم</button>
+<button onclick="showModule('ar-dailymonitor')">متابعة التقارير اليومية</button>
+</details>
+
+<details>
+<summary>✅ المراجعة الأكاديمية</summary>
+<button onclick="showModule('ar-review')">مراجعة رئيس القسم / المشرف</button>
+</details>
+
+<details>
+<summary>🗓️ الجداول</summary>
+<button onclick="showModule('ar-timetable')">إدارة الجداول</button>
+</details>
+
+<details>
+<summary>📄 التقارير</summary>
+<button onclick="showModule('ar-pdfs')">تقارير PDF</button>
+<button onclick="showModule('ar-history')">السجل والإصدارات</button>
+</details>
+
+<details>
+<summary>⚙️ الإدارة</summary>
+<button onclick="showModule('ar-admin')">إدارة النظام</button>
+</details>
+
+</div>
+
+<div class="content-area">
+
+<div id="ar-dashboard" class="module-content">
+<h3>لوحة التحكم</h3>
+<p>مرحبًا بكم في نظام التقارير الأكاديمية. ستعرض هذه اللوحة المعلومات حسب دور الموظف والصفوف والشعب والمواد المكلّف بها.</p>
+
+<div class="notice">
+<strong>مرحلة التطوير الحالية:</strong> الهيكل الأساسي للواجهة. سيتم ربط البيانات الفعلية مع Google Workspace في المرحلة التالية.
+</div>
+
+<div class="status-row">
+<div class="status-box"><div class="num">—</div><div class="label">مواد مؤشر الأداء التي تحتاج إجراء</div></div>
+<div class="status-box"><div class="num">—</div><div class="label">التقارير اليومية التي تحتاج إجراء</div></div>
+<div class="status-box"><div class="num">—</div><div class="label">بانتظار المراجعة الأكاديمية</div></div>
+<div class="status-box"><div class="num">—</div><div class="label">ملفات PDF الجاهزة للتنزيل</div></div>
+</div>
+
+<div class="info-card">
+<strong>مبدأ النظام</strong><br><br>
+مؤشر الأداء الأسبوعي = مؤشر كامل لكل صف ويشمل جميع المواد المطبقة.<br>
+التقرير اليومي للتعلم = تقرير حسب الحصة الفعلية في جدول كل صف وشعبة.
+</div>
+</div>
+
+<div id="ar-pi" class="module-content" style="display:none">
+<h3>مؤشر الأداء الأسبوعي</h3>
+<p>سيظهر هنا مؤشر الأداء الأسبوعي الكامل للصف المحدد. ستظهر جميع المواد المطبقة، بينما يقتصر التحرير على المواد المكلّف بها المعلم.</p>
+</div>
+
+<div id="ar-pimonitor" class="module-content" style="display:none">
+<h3>متابعة مؤشرات الأداء</h3>
+<p>ستعرض لوحة المتابعة عدد المواد التي تحتاج إلى إجراء وأسماء تلك المواد بالتحديد.</p>
+</div>
+
+<div id="ar-daily" class="module-content" style="display:none">
+<h3>التقرير اليومي للتعلم</h3>
+<p>يتبع تقرير أولياء الأمور ترتيب الحصص الفعلي في جدول الشعبة لذلك اليوم.</p>
+<div class="table-wrap">
+<table>
+<tr>
+<th>الحصة</th>
+<th>المادة</th>
+<th>معلم/ـة المادة</th>
+<th>ما تعلمناه اليوم</th>
+<th>مهمة الأداء</th>
+<th>التدريب لإتقان المهارة</th>
+</tr>
+<tr>
+<td colspan="6" style="text-align:center;color:#666">ستظهر هنا إدخالات اليوم المبنية على الجدول.</td>
+</tr>
+</table>
+</div>
+</div>
+
+<div id="ar-dailymonitor" class="module-content" style="display:none">
+<h3>متابعة التقارير اليومية</h3>
+<p>سيحدد النظام الشعبة أو الحصة أو المادة أو إدخال التدريب لإتقان المهارة الذي لا يزال غير مكتمل.</p>
+</div>
+
+<div id="ar-review" class="module-content" style="display:none">
+<h3>مراجعة رئيس القسم / المشرف الأكاديمي</h3>
+<p>رئيس القسم / المشرف الأكاديمي المكلّف هو الجهة الوحيدة التي تعتمد أو تعيد السجلات الأكاديمية للتعديل.</p>
+</div>
+
+<div id="ar-timetable" class="module-content" style="display:none">
+<h3>إدارة الجداول</h3>
+<p>ستكون نطاقات الجداول والصفوف وفترات الاستراحة وعدد الحصص الأسبوعية وأسبوع السريان جميعها قابلة للإعداد.</p>
+</div>
+
+<div id="ar-pdfs" class="module-content" style="display:none">
+<h3>تقارير PDF</h3>
+<p>سيتم إنشاء ملفات PDF المعتمدة لمؤشرات الأداء والتقارير اليومية تلقائيًا وحفظها في Google Drive الخاص بالمدرسة.</p>
+</div>
+
+<div id="ar-history" class="module-content" style="display:none">
+<h3>السجل والإصدارات</h3>
+<p>لن يتم استبدال الإصدارات المعتمدة بصمت، وستظل الإصدارات السابقة قابلة للتتبع.</p>
+</div>
+
+<div id="ar-admin" class="module-content" style="display:none">
+<h3>إدارة النظام</h3>
+<p>سيتمكن مسؤولو النظام المخولون من إدارة الموظفين والتكليفات والصلاحيات والمواد حسب الصف والتقويم الأكاديمي وإصدارات الجداول وإعدادات النظام.</p>
+</div>
+
+</div>
+</div>
+</div>
+
+</div>
+</body>
+</html>
