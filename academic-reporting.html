@@ -3,432 +3,621 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Academic Reporting System</title>
+<title>Academic Reporting System | Delta Schools</title>
 <style>
-@font-face{font-family:Sansation;src:url("Sansation-Regular.ttf")}
-@font-face{font-family:GEDinar;src:url("GE-Dinar-Bold.woff")}
+:root{
+  --navy:#001f4d;
+  --navy2:#062a5c;
+  --gold:#d4af37;
+  --gold2:#b99219;
+  --beige:#efe4d2;
+  --beige2:#f8f2e8;
+  --white:#fff;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --line:#e5dccf;
+  --green:#18723f;
+  --red:#a11;
+  --orange:#9a5a00;
+  --blue:#184a96;
+}
 *{box-sizing:border-box}
-body{margin:0;font-family:Sansation,Arial,sans-serif;background:#d4af37;color:#222}
-.lang-switch{position:absolute;top:15px;right:20px}
-.lang-switch button,.sidebar button{background:#001f4d;color:white;border:0;cursor:pointer;font-weight:bold}
-.lang-switch button{padding:8px 15px;border-radius:20px;margin-left:5px}
-header{text-align:center;padding:35px 20px;color:white}
-.logo{width:210px}
-header h1{margin:10px 0 5px;font-size:42px}
-nav{background:#001f4d;text-align:center;padding:15px}
-nav a{display:inline-block;border:2px solid #d4af37;padding:12px 22px;margin:6px;border-radius:25px;background:#001f4d;color:white;text-decoration:none;font-weight:bold}
-.container{max-width:1200px;margin:35px auto;background:white;padding:30px;border-radius:22px;box-shadow:0 10px 25px rgba(0,0,0,.2)}
-.layout{display:flex;gap:25px}
-.sidebar{width:340px;flex-shrink:0;border-right:4px solid #001f4d;padding-right:15px}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--beige);color:var(--text)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.lang-switch{position:absolute;top:16px;right:22px;z-index:5;display:flex;gap:8px}
+.lang-switch button{border:0;background:var(--navy);color:white;padding:8px 16px;border-radius:20px;font-weight:700}
+.hero{
+  min-height:255px;padding:34px 20px 38px;text-align:center;
+  background:linear-gradient(135deg,#e9dcc6 0%,#f7efe2 50%,#e3d1b5 100%);
+  border-bottom:5px solid var(--gold);position:relative
+}
+.logo{width:210px;max-width:55vw;height:auto;display:block;margin:0 auto 16px}
+.hero h1{margin:6px 0;color:var(--navy);font-size:42px}
+.hero p{margin:8px 0;color:var(--navy);font-weight:700}
+.topnav{background:var(--navy);padding:17px;text-align:center}
+.topnav a{display:inline-block;border:2px solid var(--gold);padding:10px 20px;margin:5px;border-radius:24px;color:white;text-decoration:none;font-weight:700}
+.shell{max-width:1500px;margin:30px auto;padding:0 20px 40px}
+.account-bar{
+  background:white;border-radius:18px;padding:16px 20px;margin-bottom:20px;
+  box-shadow:0 8px 20px rgba(0,31,77,.10);display:flex;justify-content:space-between;gap:15px;align-items:center;flex-wrap:wrap
+}
+.account-main{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.avatar{width:42px;height:42px;border-radius:50%;background:var(--navy);color:white;display:flex;align-items:center;justify-content:center;font-weight:800}
+.role-chip,.status-chip{display:inline-block;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;margin:2px}
+.role-chip{background:#f3e8bd;color:var(--navy)}
+.status-chip{background:#eef2f7;color:var(--navy)}
+.layout{display:grid;grid-template-columns:310px minmax(0,1fr);gap:22px}
+.sidebar{background:white;border-radius:20px;padding:18px;box-shadow:0 8px 20px rgba(0,31,77,.10);height:max-content;position:sticky;top:18px}
+.sidebar h3{color:var(--navy);margin:4px 5px 14px}
 .sidebar details{margin-bottom:10px}
-.sidebar summary{background:#001f4d;color:white;padding:12px;border-radius:10px;cursor:pointer;font-weight:bold}
-.sidebar button{display:block;width:95%;margin:8px 0 8px 18px;padding:10px;border-radius:8px;text-align:left}
-.content-area{flex:1;background:#f7f7f7;padding:25px;border-radius:15px;min-height:430px}
-.resource-btn{display:inline-block;background:#001f4d;color:white;padding:10px 18px;border-radius:20px;text-decoration:none;font-weight:bold;margin:10px 8px 20px 0}
-h2,h3{color:#001f4d}
+.sidebar summary{list-style:none;background:var(--navy);color:white;padding:12px 14px;border-radius:11px;font-weight:800;cursor:pointer}
+.sidebar summary::-webkit-details-marker{display:none}
+.sidebar button{width:calc(100% - 12px);margin:6px;padding:10px 12px;border:1px solid transparent;border-radius:9px;background:#f7f3eb;color:var(--navy);text-align:left;font-weight:700}
+.sidebar button:hover,.sidebar button.active{background:var(--gold);color:var(--navy);border-color:var(--gold2)}
+.content{min-width:0}
 .panel{display:none}
 .panel.active{display:block}
-.arabic{font-family:GEDinar,Tahoma,Arial,sans-serif;direction:rtl;text-align:right;font-weight:bold}
-.arabic .sidebar{border-right:0;border-left:4px solid #001f4d;padding-right:0;padding-left:15px}
-.arabic .sidebar button{margin:8px 18px 8px 0;text-align:right}
-
-.info-card{
-  background:white;
-  border:1px solid #ddd;
-  border-radius:14px;
-  padding:16px;
-  margin:14px 0;
-  box-shadow:0 4px 10px rgba(0,0,0,.05)
-}
-.info-card strong{color:#001f4d}
-.status-row{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:12px;
-  margin:16px 0;
-}
-.status-box{
-  background:white;
-  border-radius:12px;
-  padding:15px;
-  text-align:center;
-  border:1px solid #ddd;
-}
-.status-box .num{font-size:28px;color:#001f4d;font-weight:bold}
-.status-box .label{font-size:13px;color:#555;margin-top:5px}
-.notice{
-  background:#fff7d6;
-  border:1px solid #d4af37;
-  padding:14px 16px;
-  border-radius:12px;
-  margin:12px 0 18px;
-}
-.table-wrap{overflow:auto;background:white;border-radius:12px;border:1px solid #ddd;margin-top:14px}
+.card{background:white;border-radius:20px;padding:24px;margin-bottom:18px;box-shadow:0 8px 20px rgba(0,31,77,.10)}
+.card h2,.card h3{color:var(--navy);margin-top:0}
+.notice{background:#fff8dd;border-left:5px solid var(--gold);padding:14px 16px;border-radius:10px;margin:12px 0}
+.error{background:#fde8e8;border-left-color:#b42318;color:#8b1d18}
+.success{background:#eaf7ef;border-left-color:#198754;color:#155b32}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.stat{background:#fbfaf7;border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center}
+.stat .num{font-size:28px;font-weight:800;color:var(--navy)}
+.stat .label{font-size:12px;color:var(--muted);margin-top:5px}
+label{display:block;font-weight:700;color:var(--navy);font-size:13px;margin:4px 0 6px}
+input,select,textarea{width:100%;border:1px solid #d7dce4;border-radius:9px;padding:10px 11px;background:white}
+textarea{min-height:90px;resize:vertical}
+.btn{border:0;border-radius:22px;padding:10px 16px;font-weight:800;margin:4px 4px 4px 0}
+.btn.primary{background:var(--navy);color:white}
+.btn.gold{background:var(--gold);color:var(--navy)}
+.btn.light{background:#edf1f5;color:var(--navy)}
+.btn.danger{background:#b42318;color:white}
+.btn.success{background:#18723f;color:white}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px;background:white}
 table{width:100%;border-collapse:collapse;min-width:760px}
-th,td{padding:11px 12px;border-bottom:1px solid #e4e4e4;text-align:left}
-th{background:#001f4d;color:white}
-.arabic th,.arabic td{text-align:right}
-.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:bold}
-.b-red{background:#fde5e5;color:#a11}
-.b-orange{background:#fff1d6;color:#9a5a00}
-.b-blue{background:#e6efff;color:#184a96}
-.b-green{background:#e4f5ea;color:#18723f}
-.b-purple{background:#f1e8fb;color:#6d3a93}
-
-@media(max-width:800px){
-    .lang-switch{position:static;text-align:center;padding-top:15px}
-    .layout{flex-direction:column}
-    .sidebar,.arabic .sidebar{width:100%;border:0;border-bottom:4px solid #001f4d;padding:0 0 15px}
-    .container{margin:20px 12px;padding:20px}
-    .status-row{grid-template-columns:repeat(2,1fr)}
-}
-@media(max-width:520px){
-    .status-row{grid-template-columns:1fr}
-}
+th,td{padding:10px 11px;border-bottom:1px solid #ece8e1;text-align:left;vertical-align:top;font-size:13px}
+th{background:var(--navy);color:white;position:sticky;top:0;z-index:1}
+.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800}
+.b-green{background:#e4f5ea;color:var(--green)}
+.b-red{background:#fde5e5;color:var(--red)}
+.b-orange{background:#fff1d6;color:var(--orange)}
+.b-blue{background:#e6efff;color:var(--blue)}
+.b-gray{background:#eee;color:#555}
+.period-card{border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0;background:#fffdf9}
+.period-title{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.hidden{display:none!important}
+.small{font-size:12px;color:var(--muted)}
+.mono{font-family:Consolas,monospace;font-size:12px}
+.rtl{direction:rtl;text-align:right}
+.rtl .sidebar button{text-align:right}
+.rtl th,.rtl td{text-align:right}
+footer{text-align:center;color:var(--navy);padding:22px;font-size:12px}
+@media(max-width:1000px){.layout{grid-template-columns:1fr}.sidebar{position:static}.grid4,.grid3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:680px){.hero h1{font-size:30px}.grid,.grid3,.grid4{grid-template-columns:1fr}.shell{padding:0 10px 25px}.card{padding:17px}.lang-switch{position:static;justify-content:center;padding-top:12px}.hero{padding-top:14px}}
 </style>
-
-<script>
-function setLanguage(lang){
-    const ar=lang==='ar';
-    document.getElementById('header-en').style.display=ar?'none':'block';
-    document.getElementById('header-ar').style.display=ar?'block':'none';
-    document.getElementById('system-en').classList.toggle('active',!ar);
-    document.getElementById('system-ar').classList.toggle('active',ar);
-}
-
-function showModule(id){
-    const activePanel=document.querySelector('.panel.active');
-    const modules=activePanel.querySelectorAll('.module-content');
-    modules.forEach(m=>m.style.display='none');
-    const target=activePanel.querySelector('#'+id);
-    if(target) target.style.display='block';
-}
-</script>
 </head>
-
-<body onload="setLanguage('en');showModule('en-dashboard')">
-
+<body>
 <div class="lang-switch">
-<button onclick="setLanguage('en');showModule('en-dashboard')">English</button>
-<button onclick="setLanguage('ar');showModule('ar-dashboard')">العربية</button>
+  <button onclick="setLanguage('en')">English</button>
+  <button onclick="setLanguage('ar')">العربية</button>
 </div>
 
-<header>
-<img src="logo.png" class="logo" alt="School Logo">
-
-<div id="header-en">
-<h1>Academic Reporting System</h1>
-<p>Performance Indicators & Daily Learning Reports</p>
-</div>
-
-<div id="header-ar" class="arabic" style="display:none">
-<h1>نظام التقارير الأكاديمية</h1>
-<p>مؤشرات الأداء والتقارير اليومية للتعلم</p>
-</div>
+<header class="hero">
+  <img src="logo.png" class="logo" alt="Delta Schools">
+  <div data-en>
+    <h1>Academic Reporting System</h1>
+    <p>Performance Indicators · Daily Learning Reports · Academic Monitoring</p>
+  </div>
+  <div data-ar class="hidden rtl">
+    <h1>نظام التقارير الأكاديمية</h1>
+    <p>مؤشرات الأداء · تقارير التعلم اليومية · المتابعة الأكاديمية</p>
+  </div>
 </header>
 
-<nav>
-<a href="teacherhub.html">← Teacher Hub / بوابة المعلمين</a>
-<a href="home.html">🏠 Main Portal / البوابة الرئيسية</a>
+<nav class="topnav">
+  <a href="teacherhub.html">← Teacher Hub / بوابة المعلمين</a>
+  <a href="home.html">🏠 Main Portal / البوابة الرئيسية</a>
 </nav>
 
-<div class="container">
+<div class="shell" id="app">
+  <div id="globalMessage"></div>
 
-<!-- ENGLISH -->
-<div id="system-en" class="panel active">
-<h2>Academic Reporting System</h2>
+  <div class="account-bar">
+    <div class="account-main">
+      <div class="avatar" id="avatar">DS</div>
+      <div>
+        <div id="employeeName"><strong>Connecting to Delta Schools…</strong></div>
+        <div class="small" id="employeeMeta"></div>
+        <div id="roleChips"></div>
+      </div>
+    </div>
+    <div>
+      <button class="btn light" onclick="refreshContext()">↻ Refresh</button>
+      <a class="btn primary" id="authorizeBtn" target="_blank" style="text-decoration:none;display:none">Authorize Google Account</a>
+    </div>
+  </div>
 
-<div class="layout">
-<div class="sidebar">
+  <div class="layout">
+    <aside class="sidebar">
+      <div data-en>
+        <h3>Academic Modules</h3>
+        <details open><summary>🏠 Main</summary><button data-module="dashboard">Dashboard</button></details>
+        <details open><summary>📝 Performance Indicator</summary>
+          <button data-module="pi">Weekly Performance Indicator</button>
+          <button data-module="pimonitor">PI Monitoring</button>
+        </details>
+        <details open><summary>📅 Daily Learning Report</summary>
+          <button data-module="daily">Today's Daily Report</button>
+          <button data-module="dailymonitor" class="requires-monitor">Daily Report Monitoring</button>
+        </details>
+        <details class="requires-review"><summary>✅ Academic Review</summary><button data-module="review">Review Queue</button></details>
+        <details class="requires-admin"><summary>🗓️ Timetable</summary><button data-module="timetable">Timetable Management</button></details>
+        <details class="requires-archive"><summary>📄 Reports</summary>
+          <button data-module="pdfs">PDF Archive</button>
+          <button data-module="history">History & Versions</button>
+        </details>
+        <details class="requires-admin"><summary>⚙️ Administration</summary><button data-module="admin">System Administration</button></details>
+      </div>
+      <div data-ar class="hidden rtl">
+        <h3>الوحدات الأكاديمية</h3>
+        <details open><summary>🏠 الرئيسية</summary><button data-module="dashboard">لوحة التحكم</button></details>
+        <details open><summary>📝 مؤشرات الأداء</summary>
+          <button data-module="pi">مؤشر الأداء الأسبوعي</button>
+          <button data-module="pimonitor">متابعة مؤشرات الأداء</button>
+        </details>
+        <details open><summary>📅 التقرير اليومي</summary>
+          <button data-module="daily">تقرير اليوم</button>
+          <button data-module="dailymonitor" class="requires-monitor">متابعة التقارير اليومية</button>
+        </details>
+        <details class="requires-review"><summary>✅ المراجعة الأكاديمية</summary><button data-module="review">قائمة المراجعة</button></details>
+        <details class="requires-admin"><summary>🗓️ الجداول</summary><button data-module="timetable">إدارة الجداول</button></details>
+        <details class="requires-archive"><summary>📄 التقارير</summary>
+          <button data-module="pdfs">أرشيف PDF</button>
+          <button data-module="history">السجل والإصدارات</button>
+        </details>
+        <details class="requires-admin"><summary>⚙️ الإدارة</summary><button data-module="admin">إدارة النظام</button></details>
+      </div>
+    </aside>
 
-<details open>
-<summary>🏠 Main</summary>
-<button onclick="showModule('en-dashboard')">Dashboard</button>
-</details>
+    <main class="content">
+      <section id="dashboard" class="panel active">
+        <div class="card">
+          <h2 data-en>Dashboard</h2><h2 data-ar class="hidden rtl">لوحة التحكم</h2>
+          <p data-en>This dashboard adapts automatically to your employee role and assignments.</p>
+          <p data-ar class="hidden rtl">تتكيّف لوحة التحكم تلقائيًا حسب دور الموظف والتكليفات المسندة إليه.</p>
+          <div class="grid4">
+            <div class="stat"><div class="num" id="dashAssignments">—</div><div class="label">My Assignments</div></div>
+            <div class="stat"><div class="num" id="dashDaily">—</div><div class="label">Today's Report Lessons</div></div>
+            <div class="stat"><div class="num" id="dashReview">—</div><div class="label">Awaiting Review</div></div>
+            <div class="stat"><div class="num" id="dashPdfs">—</div><div class="label">Archived PDFs</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 data-en>My Assignments</h3><h3 data-ar class="hidden rtl">تكليفاتي</h3>
+          <div id="assignmentsTable" class="small">Loading…</div>
+        </div>
+      </section>
 
-<details open>
-<summary>📝 Performance Indicator</summary>
-<button onclick="showModule('en-pi')">Weekly Performance Indicator</button>
-<button onclick="showModule('en-pimonitor')">PI Monitoring</button>
-</details>
+      <section id="pi" class="panel">
+        <div class="card">
+          <h2 data-en>Weekly Performance Indicator</h2><h2 data-ar class="hidden rtl">مؤشر الأداء الأسبوعي</h2>
+          <div class="notice">One PI is shared by <strong>Grade + Subject + Week</strong>. It may apply to ALL sections or selected sections.</div>
+          <div class="grid3">
+            <div><label>Assignment</label><select id="piAssignment"></select></div>
+            <div><label>Semester ID</label><input id="piSemester" placeholder="S1"></div>
+            <div><label>Week ID</label><input id="piWeek" placeholder="AY26_S1_W01"></div>
+            <div><label>Applicable Sections</label>
+              <select id="piSectionMode" onchange="togglePiSections()">
+                <option value="ALL">ALL Sections</option>
+                <option value="SELECTED">SELECTED Sections</option>
+              </select>
+            </div>
+            <div id="piSectionSelectWrap" class="hidden"><label>Select Sections</label><select id="piSections" multiple size="5"></select></div>
+            <div><label>Weekly Periods</label><input id="piPeriodCount" type="number" min="1" value="1"></div>
+          </div>
+          <div class="actions">
+            <button class="btn gold" onclick="preparePi()">Prepare PI Rows</button>
+            <button class="btn light" onclick="loadPiSections()">Load Sections</button>
+          </div>
+          <div id="piRows"></div>
+          <div class="actions hidden" id="piActionBar">
+            <button class="btn primary" onclick="saveAllPi()">Save Draft</button>
+            <button class="btn success" onclick="submitCurrentPi()">Submit for Review</button>
+          </div>
+        </div>
+      </section>
 
-<details open>
-<summary>📅 Daily Learning Report</summary>
-<button onclick="showModule('en-daily')">Today's Daily Report</button>
-<button onclick="showModule('en-dailymonitor')">Daily Report Monitoring</button>
-</details>
+      <section id="pimonitor" class="panel">
+        <div class="card">
+          <h2 data-en>PI Monitoring</h2><h2 data-ar class="hidden rtl">متابعة مؤشرات الأداء</h2>
+          <div class="notice">PI monitoring will use the approved/submitted PI records and review queue. Select the filters below to inspect PI status within your scope.</div>
+          <div class="grid3">
+            <div><label>Grade</label><input id="pimonGrade" placeholder="G1"></div>
+            <div><label>Week</label><input id="pimonWeek" placeholder="AY26_S1_W01"></div>
+            <div><label>Status</label><select id="pimonStatus"><option value="">All</option><option>Draft</option><option>Submitted</option><option>Under Review</option><option>Returned</option><option>Resubmitted</option><option>Approved</option></select></div>
+          </div>
+          <div class="actions"><button class="btn primary" onclick="loadPiMonitoring()">Load PI Status</button></div>
+          <div id="piMonitoringResult"></div>
+        </div>
+      </section>
 
-<details>
-<summary>✅ Academic Review</summary>
-<button onclick="showModule('en-review')">HOD / Supervisor Review</button>
-</details>
+      <section id="daily" class="panel">
+        <div class="card">
+          <h2 data-en>Today's Daily Learning Report</h2><h2 data-ar class="hidden rtl">التقرير اليومي للتعلم</h2>
+          <div class="grid">
+            <div><label>Date</label><input id="dailyDate" type="date"></div>
+            <div class="actions" style="align-items:end"><button class="btn primary" onclick="loadDailySchedule()">Load My Timetable</button></div>
+          </div>
+          <div id="dailySchedule"></div>
+        </div>
+      </section>
 
-<details>
-<summary>🗓️ Timetable</summary>
-<button onclick="showModule('en-timetable')">Timetable Management</button>
-</details>
+      <section id="dailymonitor" class="panel">
+        <div class="card">
+          <h2 data-en>Daily Report Monitoring</h2><h2 data-ar class="hidden rtl">متابعة التقارير اليومية</h2>
+          <div class="grid4">
+            <div><label>Date</label><input id="monDate" type="date"></div>
+            <div><label>Grade</label><input id="monGrade" placeholder="Optional"></div>
+            <div><label>Section</label><input id="monSection" placeholder="Optional"></div>
+            <div><label>Status</label><select id="monStatus"><option value="">All</option><option>Not Started</option><option>Draft</option><option>Submitted</option><option>Under Review</option><option>Returned</option><option>Approved</option></select></div>
+          </div>
+          <div class="actions"><button class="btn primary" onclick="loadDailyMonitoring()">Load Monitoring</button></div>
+          <div id="monitoringStats"></div>
+          <div id="monitoringTable"></div>
+        </div>
+      </section>
 
-<details>
-<summary>📄 Reports</summary>
-<button onclick="showModule('en-pdfs')">PDF Reports</button>
-<button onclick="showModule('en-history')">History & Versions</button>
-</details>
+      <section id="review" class="panel">
+        <div class="card">
+          <h2 data-en>Academic Review Queue</h2><h2 data-ar class="hidden rtl">قائمة المراجعة الأكاديمية</h2>
+          <div class="grid4">
+            <div><label>Report Type</label><select id="reviewType"><option value="">PI + Daily</option><option value="PI">PI</option><option value="DAILY">Daily</option></select></div>
+            <div><label>Status</label><select id="reviewStatus"><option value="">All</option><option>Submitted</option><option>Under Review</option><option>Resubmitted</option><option>Returned</option><option>Approved</option></select></div>
+            <div><label>Grade</label><input id="reviewGrade"></div>
+            <div><label>Subject</label><input id="reviewSubject"></div>
+          </div>
+          <div class="actions"><button class="btn primary" onclick="loadReviewQueue()">Load Review Queue</button></div>
+          <div id="reviewStats"></div>
+          <div id="reviewTable"></div>
+        </div>
+      </section>
 
-<details>
-<summary>⚙️ Administration</summary>
-<button onclick="showModule('en-admin')">System Administration</button>
-</details>
+      <section id="timetable" class="panel">
+        <div class="card">
+          <h2 data-en>Timetable Management</h2><h2 data-ar class="hidden rtl">إدارة الجداول</h2>
+          <div id="timetableFolderInfo"></div>
+          <div class="grid">
+            <div><label>Effective Date for Import</label><input id="ttEffectiveDate" type="date"></div>
+            <div class="actions" style="align-items:end"><button class="btn gold" onclick="runTimetableImport()">Import Pending aSc Files</button></div>
+          </div>
+          <div class="actions"><button class="btn light" onclick="loadTimetableAdmin()">Refresh Timetable Versions</button></div>
+          <div id="timetableVersions"></div>
+        </div>
+      </section>
 
+      <section id="pdfs" class="panel">
+        <div class="card">
+          <h2 data-en>PDF Archive</h2><h2 data-ar class="hidden rtl">أرشيف التقارير PDF</h2>
+          <div class="grid4">
+            <div><label>Type</label><select id="pdfType"><option value="">All</option><option value="PI_COMBINED">Combined PI</option><option value="DAILY_COMBINED">Combined Daily</option></select></div>
+            <div><label>Grade</label><input id="pdfGrade"></div>
+            <div><label>Section</label><input id="pdfSection"></div>
+            <div><label>Week</label><input id="pdfWeek"></div>
+          </div>
+          <div class="actions"><button class="btn primary" onclick="loadPdfArchive()">Load Archive</button></div>
+
+          <h3>Generate Final Combined PDF</h3>
+          <div class="grid">
+            <div class="period-card">
+              <strong>Weekly PI</strong>
+              <label>Grade ID</label><input id="genPiGrade">
+              <label>Week ID</label><input id="genPiWeek">
+              <button class="btn gold" onclick="generateFinalPi()">Generate Final PI</button>
+            </div>
+            <div class="period-card">
+              <strong>Daily Report</strong>
+              <label>Section ID</label><input id="genDailySection">
+              <label>Date</label><input id="genDailyDate" type="date">
+              <button class="btn gold" onclick="generateFinalDaily()">Generate Final Daily Report</button>
+            </div>
+          </div>
+          <div id="pdfArchiveTable"></div>
+        </div>
+      </section>
+
+      <section id="history" class="panel">
+        <div class="card">
+          <h2 data-en>History & Versions</h2><h2 data-ar class="hidden rtl">السجل والإصدارات</h2>
+          <div class="grid3">
+            <div><label>Report Type</label><select id="histType"><option value="PI">PI</option><option value="DAILY">Daily</option></select></div>
+            <div><label>Report ID</label><input id="histReportId"></div>
+            <div class="actions" style="align-items:end"><button class="btn primary" onclick="loadHistory()">Load History</button></div>
+          </div>
+          <div id="historyResult"></div>
+        </div>
+      </section>
+
+      <section id="admin" class="panel">
+        <div class="card">
+          <h2 data-en>System Administration</h2><h2 data-ar class="hidden rtl">إدارة النظام</h2>
+          <div class="notice">Master Data remains the controlled source for Employees, Subjects, Grades, Sections, Assignments, Supervisor Scopes, Principal Scopes, permissions, calendar and timetable mappings.</div>
+          <div id="adminSummary"></div>
+        </div>
+      </section>
+    </main>
+  </div>
 </div>
 
-<div class="content-area">
+<footer>Delta Schools · Academic Reporting System · AY2026–2027</footer>
 
-<div id="en-dashboard" class="module-content">
-<h3>Dashboard</h3>
-<p>Welcome to the Academic Reporting System. This dashboard will display information based on the employee's role and assigned grades, sections, and subjects.</p>
+<script>
+const API_URL='https://script.google.com/a/macros/delta.edu.sa/s/AKfycbzk5TcfmUfiiPN7nDk5bo1Cb-NNW01ZonbMXh8eef4_16-vmEIRkeIFONq_L9kXekk/exec';
+let ME=null, LANG='en', CURRENT_PI_REPORT_ID='', CURRENT_ASSIGNMENT=null;
 
-<div class="notice">
-<strong>Current Development Stage:</strong> Frontend foundation. Live data will be connected to Google Workspace in the next phase.
-</div>
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function setMessage(text,type='success'){
+  document.getElementById('globalMessage').innerHTML=`<div class="notice ${type}">${esc(text)}</div>`;
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(type==='success')setTimeout(()=>document.getElementById('globalMessage').innerHTML='',5000);
+}
+function statusBadge(s){
+  s=String(s||'Not Started');
+  let c='b-gray';
+  if(['Approved','Final'].includes(s))c='b-green';
+  else if(['Submitted','Resubmitted','Under Review'].includes(s))c='b-blue';
+  else if(['Returned'].includes(s))c='b-red';
+  else if(['Draft'].includes(s))c='b-orange';
+  return `<span class="badge ${c}">${esc(s)}</span>`;
+}
+async function apiGet(action,params={}){
+  const u=new URL(API_URL);u.searchParams.set('action',action);
+  Object.entries(params).forEach(([k,v])=>{if(v!==''&&v!==undefined&&v!==null)u.searchParams.set(k,v)});
+  const r=await fetch(u.toString(),{credentials:'include',redirect:'follow'});
+  const txt=await r.text();let j;
+  try{j=JSON.parse(txt)}catch(e){throw new Error('The backend response could not be read. Open the authorization link once, then refresh.')}
+  if(!j.success)throw new Error(j.error||'Backend error');
+  return j.data;
+}
+async function apiPost(payload){
+  const r=await fetch(API_URL,{method:'POST',credentials:'include',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+  const txt=await r.text();let j;
+  try{j=JSON.parse(txt)}catch(e){throw new Error('The backend response could not be read. Please authorize the Apps Script web app first.')}
+  if(!j.success)throw new Error(j.error||'Backend error');
+  return j.data;
+}
+function setLanguage(lang){
+  LANG=lang;
+  document.querySelectorAll('[data-en]').forEach(x=>x.classList.toggle('hidden',lang!=='en'));
+  document.querySelectorAll('[data-ar]').forEach(x=>x.classList.toggle('hidden',lang!=='ar'));
+  document.body.classList.toggle('rtl',lang==='ar');
+}
+function showModule(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.sidebar button').forEach(b=>b.classList.toggle('active',b.dataset.module===id));
+  if(id==='daily')loadDailySchedule();
+  if(id==='review')loadReviewQueue();
+  if(id==='timetable')loadTimetableAdmin();
+  if(id==='pdfs')loadPdfArchive();
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-module]');if(b)showModule(b.dataset.module)});
 
-<div class="status-row">
-<div class="status-box"><div class="num">—</div><div class="label">PI Subjects Requiring Action</div></div>
-<div class="status-box"><div class="num">—</div><div class="label">Daily Reports Requiring Action</div></div>
-<div class="status-box"><div class="num">—</div><div class="label">Awaiting Academic Review</div></div>
-<div class="status-box"><div class="num">—</div><div class="label">PDFs Ready to Download</div></div>
-</div>
+async function refreshContext(){
+  try{
+    ME=await apiGet('me');
+    renderContext();
+    await loadDashboard();
+  }catch(e){
+    document.getElementById('employeeName').innerHTML='<strong>Authorization required</strong>';
+    document.getElementById('employeeMeta').textContent=e.message;
+    const a=document.getElementById('authorizeBtn');a.style.display='inline-block';a.href=API_URL+'?action=me';
+    setMessage(e.message,'error');
+  }
+}
+function renderContext(){
+  const emp=ME.employee||{},roles=ME.roles||[],assignments=ME.assignments||[];
+  document.getElementById('employeeName').innerHTML=`<strong>${esc(emp.EmployeeNameEN||'')}</strong>${emp.EmployeeNameAR?` · ${esc(emp.EmployeeNameAR)}`:''}`;
+  document.getElementById('employeeMeta').textContent=`${emp.EmployeeID||''} · ${ME.email||''}`;
+  document.getElementById('roleChips').innerHTML=roles.map(r=>`<span class="role-chip">${esc(r)}</span>`).join('');
+  document.getElementById('avatar').textContent=(emp.EmployeeNameEN||'DS').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+  document.getElementById('authorizeBtn').style.display='none';
 
-<div class="info-card">
-<strong>System Principle</strong><br><br>
-Weekly PI = one complete PI per grade containing all applicable subjects.<br>
-Daily Learning Report = actual timetable-period reporting for each grade and section.
-</div>
-</div>
+  const review=roles.some(r=>['Supervisor','SystemAdmin'].includes(r));
+  const monitor=roles.some(r=>['Supervisor','Principal','GeneralAcademicManager','SystemAdmin'].includes(r));
+  const admin=roles.includes('SystemAdmin');
+  const archive=roles.some(r=>['Supervisor','Principal','GeneralAcademicManager','SystemAdmin','ReportPersonnel'].includes(r));
+  document.querySelectorAll('.requires-review').forEach(x=>x.classList.toggle('hidden',!review));
+  document.querySelectorAll('.requires-monitor').forEach(x=>x.classList.toggle('hidden',!monitor));
+  document.querySelectorAll('.requires-admin').forEach(x=>x.classList.toggle('hidden',!admin));
+  document.querySelectorAll('.requires-archive').forEach(x=>x.classList.toggle('hidden',!archive));
 
-<div id="en-pi" class="module-content" style="display:none">
-<h3>Weekly Performance Indicator</h3>
-<p>The complete weekly PI for the selected grade will appear here. All applicable subjects will be visible. Teachers will be able to edit only the subject(s) assigned to them.</p>
+  const opts=assignments.map(a=>`<option value="${esc(a.AssignmentID)}" data-grade="${esc(a.GradeID)}" data-subject="${esc(a.SubjectID)}">${esc(a.GradeID)} · ${esc(a.SectionID||'ALL')} · ${esc(a.SubjectID)}</option>`).join('');
+  document.getElementById('piAssignment').innerHTML='<option value="">Select assignment</option>'+opts;
+  document.getElementById('dashAssignments').textContent=assignments.length;
+  document.getElementById('adminSummary').innerHTML=`<div class="grid3"><div class="stat"><div class="num">${assignments.length}</div><div class="label">Teacher Assignments</div></div><div class="stat"><div class="num">${roles.length}</div><div class="label">Detected Roles</div></div><div class="stat"><div class="num">${esc(emp.EmployeeID||'—')}</div><div class="label">Employee ID</div></div></div>`;
+}
+async function loadDashboard(){
+  renderAssignments();
+  try{const d=await apiGet('myDailySchedule',{date:today()});document.getElementById('dashDaily').textContent=d.count||0}catch(e){document.getElementById('dashDaily').textContent='—'}
+  if((ME.roles||[]).some(r=>['Supervisor','SystemAdmin'].includes(r))){
+    try{const q=await apiGet('reviewQueue');document.getElementById('dashReview').textContent=q.counts?.awaitingReview??0}catch(e){}
+  }
+  if((ME.roles||[]).some(r=>['Supervisor','Principal','GeneralAcademicManager','SystemAdmin','ReportPersonnel'].includes(r))){
+    try{const p=await apiGet('pdfArchive');document.getElementById('dashPdfs').textContent=p.count??0}catch(e){}
+  }
+}
+function renderAssignments(){
+  const a=ME?.assignments||[];
+  if(!a.length){document.getElementById('assignmentsTable').innerHTML='<div class="notice">No active TeacherAssignments were found for this employee.</div>';return}
+  document.getElementById('assignmentsTable').innerHTML=`<div class="table-wrap"><table><thead><tr><th>Assignment</th><th>Grade</th><th>Section</th><th>Subject</th><th>PI</th><th>Daily</th></tr></thead><tbody>${a.map(x=>`<tr><td>${esc(x.AssignmentID)}</td><td>${esc(x.GradeID)}</td><td>${esc(x.SectionID||'')}</td><td>${esc(x.SubjectID)}</td><td>${esc(x.CanEditPI)}</td><td>${esc(x.CanEditDailyReport)}</td></tr>`).join('')}</tbody></table></div>`;
+}
 
-<div class="info-card">
-<strong>Example:</strong><br>
-Grade 1 → Week 1 → Whole PI<br><br>
-English — editable for assigned English teacher<br>
-Mathematics — view only for other teachers<br>
-Science — view only for other teachers<br>
-Arabic — view only for other teachers
-</div>
-</div>
+function selectedAssignment(){
+  const id=document.getElementById('piAssignment').value;
+  return (ME?.assignments||[]).find(a=>String(a.AssignmentID)===id);
+}
+async function loadPiSections(){
+  const a=selectedAssignment();if(!a)return setMessage('Select an assignment first.','error');
+  try{
+    const rows=await apiGet('piSections',{gradeId:a.GradeID});
+    document.getElementById('piSections').innerHTML=rows.map(s=>`<option value="${esc(s.SectionID)}">${esc(s.SectionNameEN||s.SectionName||s.SectionID)} (${esc(s.SectionID)})</option>`).join('');
+    setMessage('Sections loaded.');
+  }catch(e){setMessage(e.message,'error')}
+}
+function togglePiSections(){document.getElementById('piSectionSelectWrap').classList.toggle('hidden',document.getElementById('piSectionMode').value!=='SELECTED')}
+function preparePi(){
+  const a=selectedAssignment();const n=Math.max(1,Number(document.getElementById('piPeriodCount').value)||1);
+  if(!a)return setMessage('Select an assignment first.','error');
+  CURRENT_ASSIGNMENT=a;CURRENT_PI_REPORT_ID='';
+  document.getElementById('piRows').innerHTML=Array.from({length:n},(_,i)=>`<div class="period-card" data-pi-period="${i+1}">
+    <div class="period-title"><strong>Weekly Period ${i+1}</strong><span class="small">${esc(a.GradeID)} · ${esc(a.SubjectID)}</span></div>
+    <div class="grid">
+      <div><label>Lesson</label><textarea data-field="lesson"></textarea></div>
+      <div><label>Classwork</label><textarea data-field="classwork"></textarea></div>
+      <div><label>Performance Task</label><textarea data-field="performanceTask"></textarea></div>
+      <div><label>Objectives</label><textarea data-field="objectives"></textarea></div>
+    </div></div>`).join('');
+  document.getElementById('piActionBar').classList.remove('hidden');
+}
+function piSectionPayload(){
+  const mode=document.getElementById('piSectionMode').value;
+  return {mode,sections:mode==='SELECTED'?[...document.getElementById('piSections').selectedOptions].map(o=>o.value).join(','):''};
+}
+async function saveAllPi(){
+  const a=CURRENT_ASSIGNMENT||selectedAssignment(),week=document.getElementById('piWeek').value.trim(),sem=document.getElementById('piSemester').value.trim();
+  if(!a||!week||!sem)return setMessage('Assignment, Semester ID and Week ID are required.','error');
+  const sec=piSectionPayload();
+  if(sec.mode==='SELECTED'&&!sec.sections)return setMessage('Select at least one section.','error');
+  const items=[...document.querySelectorAll('[data-pi-period]')].map(card=>({
+    assignmentId:a.AssignmentID,weekId:week,semesterId:sem,periodNumber:Number(card.dataset.piPeriod),
+    applicableSectionsMode:sec.mode,applicableSections:sec.sections,
+    lesson:card.querySelector('[data-field="lesson"]').value,
+    classwork:card.querySelector('[data-field="classwork"]').value,
+    performanceTask:card.querySelector('[data-field="performanceTask"]').value,
+    objectives:card.querySelector('[data-field="objectives"]').value
+  }));
+  try{
+    const r=await apiPost({action:'savePIBatch',items});
+    CURRENT_PI_REPORT_ID=r?.[0]?.PIReportID||'';
+    setMessage(`PI draft saved. ${r.length} period row(s) updated.`);
+  }catch(e){setMessage(e.message,'error')}
+}
+async function submitCurrentPi(){
+  if(!CURRENT_PI_REPORT_ID){await saveAllPi();if(!CURRENT_PI_REPORT_ID)return}
+  try{const r=await apiPost({action:'submitPI',reportId:CURRENT_PI_REPORT_ID});setMessage(`PI submitted successfully. Status: ${r.status}`)}catch(e){setMessage(e.message,'error')}
+}
+async function loadPiMonitoring(){
+  try{
+    const q=await apiGet('reviewQueue',{reportType:'PI',gradeId:document.getElementById('pimonGrade').value,weekId:document.getElementById('pimonWeek').value,status:document.getElementById('pimonStatus').value});
+    renderReviewRows(q,'piMonitoringResult',false);
+  }catch(e){document.getElementById('piMonitoringResult').innerHTML=`<div class="notice error">${esc(e.message)}</div>`}
+}
 
-<div id="en-pimonitor" class="module-content" style="display:none">
-<h3>PI Monitoring</h3>
-<p>The dashboard will show both the number and the names of subjects requiring action.</p>
+async function loadDailySchedule(){
+  const date=document.getElementById('dailyDate').value||today();
+  try{
+    const d=await apiGet('myDailySchedule',{date});
+    document.getElementById('dailySchedule').innerHTML=d.entries.length?d.entries.map(renderDailyCard).join(''):`<div class="notice">No Daily Report timetable lessons were found for ${esc(date)}.</div>`;
+  }catch(e){document.getElementById('dailySchedule').innerHTML=`<div class="notice error">${esc(e.message)}</div>`}
+}
+function renderDailyCard(e){
+  const locked=!e.canEdit||['Submitted','Under Review','Approved'].includes(e.Status);
+  return `<div class="period-card" data-daily-entry="${esc(e.TimetableEntryID)}" data-report-id="${esc(e.DailyReportID)}">
+    <div class="period-title"><div><strong>Period ${esc(e.PeriodNumber)} — ${esc(e.SubjectNameEN||e.SubjectID)}</strong><div class="small">${esc(e.GradeID)} · ${esc(e.SectionID)} · ${esc(e.StartTime)}-${esc(e.EndTime)}</div></div>${statusBadge(e.Status)}</div>
+    ${e.ReviewComment?`<div class="notice error"><strong>Review Comment:</strong> ${esc(e.ReviewComment)}</div>`:''}
+    <div class="grid3">
+      <div><label>What We Learned Today</label><textarea data-field="learned" ${locked?'disabled':''}>${esc(e.WhatWeLearnedToday)}</textarea></div>
+      <div><label>Performance Task</label><textarea data-field="task" ${locked?'disabled':''}>${esc(e.PerformanceTask)}</textarea></div>
+      <div><label>Practice for Mastery</label><textarea data-field="practice" ${locked?'disabled':''}>${esc(e.PracticeForMastery)}</textarea></div>
+    </div>
+    <div class="actions">${!locked?`<button class="btn primary" onclick="saveDailyEntry(this)">Save Draft</button><button class="btn success" onclick="submitDailyEntry(this)">Submit</button>`:''}</div>
+  </div>`;
+}
+async function saveDailyEntry(btn){
+  const card=btn.closest('[data-daily-entry]'),date=document.getElementById('dailyDate').value;
+  try{
+    const r=await apiPost({action:'saveDailyReport',timetableEntryId:card.dataset.dailyEntry,date,
+      whatWeLearnedToday:card.querySelector('[data-field="learned"]').value,
+      performanceTask:card.querySelector('[data-field="task"]').value,
+      practiceForMastery:card.querySelector('[data-field="practice"]').value});
+    card.dataset.reportId=r[0]?.DailyReportID||card.dataset.reportId;setMessage('Daily Report draft saved.');
+  }catch(e){setMessage(e.message,'error')}
+}
+async function submitDailyEntry(btn){
+  await saveDailyEntry(btn);
+  const card=btn.closest('[data-daily-entry]');
+  try{const r=await apiPost({action:'submitDailyReport',reportId:card.dataset.reportId});setMessage(`Daily Report submitted. Status: ${r.status}`);loadDailySchedule()}catch(e){setMessage(e.message,'error')}
+}
 
-<div class="table-wrap">
-<table>
-<tr><th>Grade</th><th>Required Subjects</th><th>Complete</th><th>Require Action</th><th>Subjects Requiring Action</th></tr>
-<tr><td>Grade 1</td><td>12</td><td>2</td><td><span class="badge b-red">10</span></td><td>Science, Arabic, Islamic Studies, ICT, Art, PE, Music, French, STEAM, Saudi History</td></tr>
-</table>
-</div>
-</div>
+async function loadDailyMonitoring(){
+  try{
+    const d=await apiGet('dailyMonitoring',{date:document.getElementById('monDate').value||today(),gradeId:document.getElementById('monGrade').value,sectionId:document.getElementById('monSection').value,status:document.getElementById('monStatus').value});
+    const summary=d.summary||d.counts||{};
+    document.getElementById('monitoringStats').innerHTML=`<div class="grid4">${Object.entries(summary).slice(0,8).map(([k,v])=>`<div class="stat"><div class="num">${esc(v)}</div><div class="label">${esc(k)}</div></div>`).join('')}</div>`;
+    const rows=d.rows||d.entries||[];
+    document.getElementById('monitoringTable').innerHTML=rows.length?`<div class="table-wrap"><table><thead><tr><th>Grade</th><th>Section</th><th>Period</th><th>Subject</th><th>Teacher</th><th>Status</th><th>Missing</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.GradeID)}</td><td>${esc(r.SectionID)}</td><td>${esc(r.PeriodNumber)}</td><td>${esc(r.SubjectNameEN||r.SubjectID)}</td><td>${esc(r.EmployeeNameEN||r.EmployeeID)}</td><td>${statusBadge(r.Status)}</td><td>${esc(Array.isArray(r.MissingFields)?r.MissingFields.join(', '):r.MissingFields||'')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="notice">No monitoring rows found.</div>';
+  }catch(e){setMessage(e.message,'error')}
+}
 
-<div id="en-daily" class="module-content" style="display:none">
-<h3>Today's Daily Learning Report</h3>
-<p>The parent-facing report follows the actual timetable period order for the selected section.</p>
+async function loadReviewQueue(){
+  try{
+    const q=await apiGet('reviewQueue',{reportType:document.getElementById('reviewType').value,status:document.getElementById('reviewStatus').value,gradeId:document.getElementById('reviewGrade').value,subjectId:document.getElementById('reviewSubject').value});
+    renderReviewRows(q,'reviewTable',true);
+    document.getElementById('reviewStats').innerHTML=`<div class="grid4">${Object.entries(q.counts||{}).slice(0,8).map(([k,v])=>`<div class="stat"><div class="num">${esc(v)}</div><div class="label">${esc(k)}</div></div>`).join('')}</div>`;
+  }catch(e){setMessage(e.message,'error')}
+}
+function renderReviewRows(q,target,actions){
+  const rows=q.rows||[];
+  document.getElementById(target).innerHTML=rows.length?`<div class="table-wrap"><table><thead><tr><th>Type</th><th>Teacher</th><th>Grade/Section</th><th>Subject</th><th>Week/Date</th><th>Status</th>${actions?'<th>Action</th>':''}</tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.ReportType)}</td><td>${esc(r.EmployeeNameEN||r.EmployeeID)}</td><td>${esc(r.GradeID)} ${esc(r.SectionID||'')}</td><td>${esc(r.SubjectNameEN||r.SubjectID)}</td><td>${esc(r.WeekID||r.Date||'')}</td><td>${statusBadge(r.Status)}<div class="small">V${esc(r.Version)}</div></td>${actions?`<td><button class="btn light" onclick="reviewAction('startReview','${esc(r.ReportType)}','${esc(r.ReportID)}')">Start</button><button class="btn success" onclick="reviewAction('approveReport','${esc(r.ReportType)}','${esc(r.ReportID)}')">Approve</button><button class="btn danger" onclick="returnReview('${esc(r.ReportType)}','${esc(r.ReportID)}')">Return</button></td>`:''}</tr>`).join('')}</tbody></table></div>`:'<div class="notice">No records found.</div>';
+}
+async function reviewAction(action,type,id,comment=''){
+  try{const r=await apiPost({action,reportType:type,reportId:id,comment});setMessage(`Review action completed. Status: ${r.status}`);loadReviewQueue()}catch(e){setMessage(e.message,'error')}
+}
+function returnReview(type,id){const c=prompt('Return comment (required):');if(c)reviewAction('returnReport',type,id,c)}
 
-<div class="table-wrap">
-<table>
-<tr>
-<th>Period</th>
-<th>Subject</th>
-<th>Subject Teacher</th>
-<th>What We Learned Today</th>
-<th>Performance Task</th>
-<th>Practice for Mastery</th>
-</tr>
-<tr>
-<td colspan="6" style="text-align:center;color:#666">Today's timetable-based entries will appear here.</td>
-</tr>
-</table>
-</div>
-</div>
+async function loadTimetableAdmin(){
+  try{
+    const f=await apiGet('timetableImportFolder');
+    document.getElementById('timetableFolderInfo').innerHTML=`<div class="notice"><strong>Pending folder:</strong> <a href="${esc(f.pendingFolderUrl)}" target="_blank">Open Pending</a> · <strong>Processed:</strong> <a href="${esc(f.processedFolderUrl)}" target="_blank">Open Processed</a></div>`;
+    const v=await apiGet('timetableVersions');
+    document.getElementById('timetableVersions').innerHTML=v.length?`<div class="table-wrap"><table><thead><tr><th>Version</th><th>Scope</th><th>Grades</th><th>Gender</th><th>Sections</th><th>Effective</th><th>Status</th></tr></thead><tbody>${v.map(r=>`<tr><td>${esc(r.TimetableVersionID)}</td><td>${esc(r.ScopeName)}</td><td>${esc(r.GradeFrom)}-${esc(r.GradeTo)}</td><td>${esc(r.Gender)}</td><td>${esc(r.ApplicableSections)}</td><td>${esc(r.EffectiveFrom)} → ${esc(r.EffectiveUntil||'')}</td><td>${esc(r.Status)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="notice">No timetable versions found.</div>';
+  }catch(e){setMessage(e.message,'error')}
+}
+async function runTimetableImport(){
+  try{const r=await apiPost({action:'importAscTimetables',effectiveDate:document.getElementById('ttEffectiveDate').value||today()});setMessage(`Timetable import completed. ${r.rowsImported||0} rows imported; ${r.filesMovedToProcessed||0} file(s) moved to Processed.`);console.log(r);loadTimetableAdmin()}catch(e){setMessage(e.message,'error')}
+}
 
-<div id="en-dailymonitor" class="module-content" style="display:none">
-<h3>Daily Report Monitoring</h3>
-<p>The system will identify the exact section, period, subject, or Practice for Mastery entry that is still incomplete.</p>
-</div>
+async function loadPdfArchive(){
+  try{
+    const p=await apiGet('pdfArchive',{reportType:document.getElementById('pdfType').value,gradeId:document.getElementById('pdfGrade').value,sectionId:document.getElementById('pdfSection').value,weekId:document.getElementById('pdfWeek').value});
+    document.getElementById('pdfArchiveTable').innerHTML=p.rows?.length?`<div class="table-wrap"><table><thead><tr><th>Type</th><th>Grade</th><th>Section</th><th>Week</th><th>File</th><th>Generated</th><th>Download</th></tr></thead><tbody>${p.rows.map(r=>`<tr><td>${esc(r.ReportType)}</td><td>${esc(r.GradeID)}</td><td>${esc(r.SectionID)}</td><td>${esc(r.WeekID)}</td><td>${esc(r.FileName)}</td><td>${esc(r.GeneratedDateTime)}</td><td><button class="btn light" onclick="downloadPdf('${esc(r.PDFID)}')">Open</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="notice">No archived PDFs found.</div>';
+  }catch(e){setMessage(e.message,'error')}
+}
+async function downloadPdf(id){try{const d=await apiPost({action:'prepareDownload',pdfId:id});window.open(d.url,'_blank')}catch(e){setMessage(e.message,'error')}}
+async function generateFinalPi(){try{const r=await apiPost({action:'generateFinalPI',gradeId:document.getElementById('genPiGrade').value,weekId:document.getElementById('genPiWeek').value});setMessage(`Final PI generated: ${r.FileName}`);loadPdfArchive()}catch(e){setMessage(e.message,'error')}}
+async function generateFinalDaily(){try{const r=await apiPost({action:'generateFinalDailyReport',sectionId:document.getElementById('genDailySection').value,date:document.getElementById('genDailyDate').value});setMessage(`Final Daily Report generated: ${r.FileName}`);loadPdfArchive()}catch(e){setMessage(e.message,'error')}}
 
-<div id="en-review" class="module-content" style="display:none">
-<h3>HOD / Academic Supervisor Review</h3>
-<p>Only the assigned HOD / Academic Supervisor approves or returns academic records.</p>
-<div class="info-card">
-<strong>Principal:</strong> View only within assigned scope.<br>
-<strong>General Academic Manager:</strong> View all only.<br>
-<strong>Report Personnel:</strong> Access finalized PDFs and download.
-</div>
-</div>
+async function loadHistory(){
+  try{
+    const h=await apiGet('reportHistory',{reportType:document.getElementById('histType').value,reportId:document.getElementById('histReportId').value});
+    document.getElementById('historyResult').innerHTML=`<div class="notice"><strong>Status:</strong> ${esc(h.currentStatus)} · <strong>Latest Version:</strong> V${esc(h.latestVersion)}</div><div class="table-wrap"><table><thead><tr><th>Action</th><th>From</th><th>To</th><th>By</th><th>Date/Time</th><th>Comment</th><th>Version</th></tr></thead><tbody>${(h.workflow||[]).map(r=>`<tr><td>${esc(r.Action)}</td><td>${esc(r.FromStatus)}</td><td>${esc(r.ToStatus)}</td><td>${esc(r.ActionByName||r.ActionByEmployeeID)}</td><td>${esc(r.ActionDateTime)}</td><td>${esc(r.Comment)}</td><td>V${esc(r.Version)}</td></tr>`).join('')}</tbody></table></div>`;
+  }catch(e){setMessage(e.message,'error')}
+}
 
-<div id="en-timetable" class="module-content" style="display:none">
-<h3>Timetable Management</h3>
-<p>Timetable scopes, grade ranges, break structures, weekly period totals, and effective weeks will all be configurable.</p>
-<div class="info-card">
-A timetable may cover KG1–KG3, Grade 1–3, Grade 1–6, or any future combination. Nothing is hard-coded.
-</div>
-</div>
-
-<div id="en-pdfs" class="module-content" style="display:none">
-<h3>PDF Reports</h3>
-<p>Approved PI and Daily Learning Report PDFs will be generated automatically and stored in the school's Google Drive.</p>
-</div>
-
-<div id="en-history" class="module-content" style="display:none">
-<h3>History & Versions</h3>
-<p>Approved versions will never be silently overwritten. V1, V2, V3 and historical PDFs will remain traceable.</p>
-</div>
-
-<div id="en-admin" class="module-content" style="display:none">
-<h3>System Administration</h3>
-<p>Authorized administrators will manage employees, assignments, permissions, subjects by grade, academic calendar, timetable versions, and system settings.</p>
-</div>
-
-</div>
-</div>
-</div>
-
-<!-- ARABIC -->
-<div id="system-ar" class="panel arabic">
-<h2>نظام التقارير الأكاديمية</h2>
-
-<div class="layout">
-<div class="sidebar">
-
-<details open>
-<summary>🏠 الرئيسية</summary>
-<button onclick="showModule('ar-dashboard')">لوحة التحكم</button>
-</details>
-
-<details open>
-<summary>📝 مؤشرات الأداء</summary>
-<button onclick="showModule('ar-pi')">مؤشر الأداء الأسبوعي</button>
-<button onclick="showModule('ar-pimonitor')">متابعة مؤشرات الأداء</button>
-</details>
-
-<details open>
-<summary>📅 التقرير اليومي للتعلم</summary>
-<button onclick="showModule('ar-daily')">تقرير اليوم</button>
-<button onclick="showModule('ar-dailymonitor')">متابعة التقارير اليومية</button>
-</details>
-
-<details>
-<summary>✅ المراجعة الأكاديمية</summary>
-<button onclick="showModule('ar-review')">مراجعة رئيس القسم / المشرف</button>
-</details>
-
-<details>
-<summary>🗓️ الجداول</summary>
-<button onclick="showModule('ar-timetable')">إدارة الجداول</button>
-</details>
-
-<details>
-<summary>📄 التقارير</summary>
-<button onclick="showModule('ar-pdfs')">تقارير PDF</button>
-<button onclick="showModule('ar-history')">السجل والإصدارات</button>
-</details>
-
-<details>
-<summary>⚙️ الإدارة</summary>
-<button onclick="showModule('ar-admin')">إدارة النظام</button>
-</details>
-
-</div>
-
-<div class="content-area">
-
-<div id="ar-dashboard" class="module-content">
-<h3>لوحة التحكم</h3>
-<p>مرحبًا بكم في نظام التقارير الأكاديمية. ستعرض هذه اللوحة المعلومات حسب دور الموظف والصفوف والشعب والمواد المكلّف بها.</p>
-
-<div class="notice">
-<strong>مرحلة التطوير الحالية:</strong> الهيكل الأساسي للواجهة. سيتم ربط البيانات الفعلية مع Google Workspace في المرحلة التالية.
-</div>
-
-<div class="status-row">
-<div class="status-box"><div class="num">—</div><div class="label">مواد مؤشر الأداء التي تحتاج إجراء</div></div>
-<div class="status-box"><div class="num">—</div><div class="label">التقارير اليومية التي تحتاج إجراء</div></div>
-<div class="status-box"><div class="num">—</div><div class="label">بانتظار المراجعة الأكاديمية</div></div>
-<div class="status-box"><div class="num">—</div><div class="label">ملفات PDF الجاهزة للتنزيل</div></div>
-</div>
-
-<div class="info-card">
-<strong>مبدأ النظام</strong><br><br>
-مؤشر الأداء الأسبوعي = مؤشر كامل لكل صف ويشمل جميع المواد المطبقة.<br>
-التقرير اليومي للتعلم = تقرير حسب الحصة الفعلية في جدول كل صف وشعبة.
-</div>
-</div>
-
-<div id="ar-pi" class="module-content" style="display:none">
-<h3>مؤشر الأداء الأسبوعي</h3>
-<p>سيظهر هنا مؤشر الأداء الأسبوعي الكامل للصف المحدد. ستظهر جميع المواد المطبقة، بينما يقتصر التحرير على المواد المكلّف بها المعلم.</p>
-</div>
-
-<div id="ar-pimonitor" class="module-content" style="display:none">
-<h3>متابعة مؤشرات الأداء</h3>
-<p>ستعرض لوحة المتابعة عدد المواد التي تحتاج إلى إجراء وأسماء تلك المواد بالتحديد.</p>
-</div>
-
-<div id="ar-daily" class="module-content" style="display:none">
-<h3>التقرير اليومي للتعلم</h3>
-<p>يتبع تقرير أولياء الأمور ترتيب الحصص الفعلي في جدول الشعبة لذلك اليوم.</p>
-<div class="table-wrap">
-<table>
-<tr>
-<th>الحصة</th>
-<th>المادة</th>
-<th>معلم/ـة المادة</th>
-<th>ما تعلمناه اليوم</th>
-<th>مهمة الأداء</th>
-<th>التدريب لإتقان المهارة</th>
-</tr>
-<tr>
-<td colspan="6" style="text-align:center;color:#666">ستظهر هنا إدخالات اليوم المبنية على الجدول.</td>
-</tr>
-</table>
-</div>
-</div>
-
-<div id="ar-dailymonitor" class="module-content" style="display:none">
-<h3>متابعة التقارير اليومية</h3>
-<p>سيحدد النظام الشعبة أو الحصة أو المادة أو إدخال التدريب لإتقان المهارة الذي لا يزال غير مكتمل.</p>
-</div>
-
-<div id="ar-review" class="module-content" style="display:none">
-<h3>مراجعة رئيس القسم / المشرف الأكاديمي</h3>
-<p>رئيس القسم / المشرف الأكاديمي المكلّف هو الجهة الوحيدة التي تعتمد أو تعيد السجلات الأكاديمية للتعديل.</p>
-</div>
-
-<div id="ar-timetable" class="module-content" style="display:none">
-<h3>إدارة الجداول</h3>
-<p>ستكون نطاقات الجداول والصفوف وفترات الاستراحة وعدد الحصص الأسبوعية وأسبوع السريان جميعها قابلة للإعداد.</p>
-</div>
-
-<div id="ar-pdfs" class="module-content" style="display:none">
-<h3>تقارير PDF</h3>
-<p>سيتم إنشاء ملفات PDF المعتمدة لمؤشرات الأداء والتقارير اليومية تلقائيًا وحفظها في Google Drive الخاص بالمدرسة.</p>
-</div>
-
-<div id="ar-history" class="module-content" style="display:none">
-<h3>السجل والإصدارات</h3>
-<p>لن يتم استبدال الإصدارات المعتمدة بصمت، وستظل الإصدارات السابقة قابلة للتتبع.</p>
-</div>
-
-<div id="ar-admin" class="module-content" style="display:none">
-<h3>إدارة النظام</h3>
-<p>سيتمكن مسؤولو النظام المخولون من إدارة الموظفين والتكليفات والصلاحيات والمواد حسب الصف والتقويم الأكاديمي وإصدارات الجداول وإعدادات النظام.</p>
-</div>
-
-</div>
-</div>
-</div>
-
-</div>
+function today(){const d=new Date();return d.toISOString().slice(0,10)}
+document.getElementById('dailyDate').value=today();
+document.getElementById('monDate').value=today();
+document.getElementById('ttEffectiveDate').value=today();
+document.getElementById('genDailyDate').value=today();
+setLanguage('en');
+refreshContext();
+</script>
 </body>
 </html>
