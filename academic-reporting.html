@@ -1,623 +1,4432 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Academic Reporting System | Delta Schools</title>
-<style>
-:root{
-  --navy:#001f4d;
-  --navy2:#062a5c;
-  --gold:#d4af37;
-  --gold2:#b99219;
-  --beige:#efe4d2;
-  --beige2:#f8f2e8;
-  --white:#fff;
-  --text:#1f2937;
-  --muted:#6b7280;
-  --line:#e5dccf;
-  --green:#18723f;
-  --red:#a11;
-  --orange:#9a5a00;
-  --blue:#184a96;
+/**
+ * DELTA INTERNATIONAL SCHOOLS
+ * Academic Reporting System - Operational Backend
+ * AY2026-2027
+ *
+ * PASTE THIS ENTIRE FILE ONCE into:
+ * Operational Data Spreadsheet > Extensions > Apps Script > Code.gs
+ *
+ * Then run setupSystem() once and authorize.
+ *
+ * IMPORTANT:
+ * - This script is intended to be BOUND to:
+ *   "Academic Reporting System - Operational Data - AY2026-2027"
+ * - Master Data Spreadsheet ID is configured below.
+ * - Operational tabs are system-managed. Staff should not type directly into them.
+ */
+
+const CONFIG = Object.freeze({
+  MASTER_SPREADSHEET_ID: '1Hklyk-NFDnrhJFsdBy3Onus_3R_CqUvOco4SN5EWhVw',
+  ACADEMIC_YEAR_ID: 'AY2026_2027',
+  TIME_ZONE: 'Asia/Riyadh',
+  ACADEMIC_REPORTS_ROOT_FOLDER_ID: '1XPqQYi8jksQc41AaRF4-EAxhYX-_q6LU',
+  PI_FOLDER_NAME: 'Performance Indicators',
+  DAILY_PDF_FOLDER_NAME: 'Daily Reports',
+  ASC_IMPORT_ROOT_FOLDER_NAME: 'ASC Timetable Imports - AY2026-2027',
+  ASC_IMPORT_PENDING_FOLDER_NAME: 'Pending',
+  ASC_IMPORT_PROCESSED_FOLDER_NAME: 'Processed',
+  DOMAIN_HINT: 'delta.edu.sa',
+  LOCK_TIMEOUT_MS: 20000
+});
+
+const SHEETS = Object.freeze({
+  PI: 'PerformanceIndicatorReports',
+  PI_DETAILS: 'PerformanceIndicatorDetails',
+  DAILY: 'DailyReports',
+  WORKFLOW: 'ReportWorkflow',
+  MONITORING: 'MonitoringLog',
+  PDF: 'PDFArchive',
+  DOWNLOAD: 'DownloadHistory',
+  AUDIT: 'AuditLog'
+});
+
+const HEADERS = Object.freeze({
+  PerformanceIndicatorReports: [
+    'PIReportID','AcademicYearID','SemesterID','WeekID','AssignmentID',
+    'EmployeeID','GradeID','SubjectID','ApplicableSectionsMode',
+    'ApplicableSections','Status','SubmittedDateTime','ReviewedBy',
+    'ReviewedDateTime','ReviewComment','Version','Active'
+  ],
+
+  PerformanceIndicatorDetails: [
+    'PIDetailID','PIReportID','PeriodNumber','Lesson','Classwork',
+    'PerformanceTask','Objectives','LastUpdatedAt','LastUpdatedBy','Active'
+  ],
+
+  DailyReports: [
+    'DailyReportID','AcademicYearID','SemesterID','Date','WeekID',
+    'AssignmentID','EmployeeID','GradeID','SectionID','SubjectID',
+    'PeriodNumber','TimetableEntryID','WhatWeLearnedToday','PerformanceTask',
+    'PracticeForMastery','Status','SubmittedDateTime','ReviewedBy',
+    'ReviewedDateTime','ReviewComment','Version','Active',
+    'CreatedDateTime','UpdatedDateTime'
+  ],
+
+  ReportWorkflow: [
+    'WorkflowID','ReportType','ReportID','AcademicYearID','EmployeeID',
+    'Action','FromStatus','ToStatus','ActionByEmployeeID','ActionByName',
+    'ActionDateTime','Comment','Version','Active'
+  ],
+
+  MonitoringLog: [
+    'MonitoringID','AcademicYearID','SemesterID','WeekID',
+    'MonitorEmployeeID','TargetEmployeeID','GradeID','SectionID',
+    'SubjectID','MonitoringType','ReferenceReportID','Finding',
+    'ActionRequired','DueDate','FollowUpStatus','FollowUpDate','Notes',
+    'CreatedDateTime','Active'
+  ],
+
+  PDFArchive: [
+    'PDFID','AcademicYearID','ReportType','ReportID','EmployeeID',
+    'GradeID','SectionID','SubjectID','SemesterID','WeekID','FileName',
+    'DriveFileID','DriveFolderID','GeneratedByEmployeeID',
+    'GeneratedDateTime','Version','ApprovalStatus','Active'
+  ],
+
+  DownloadHistory: [
+    'DownloadID','PDFID','ReportType','ReportID',
+    'DownloadedByEmployeeID','DownloadedByName','DownloadDateTime',
+    'UserEmail','UserRole','Active'
+  ],
+
+  AuditLog: [
+    'AuditID','AcademicYearID','ActionDateTime','EmployeeID',
+    'EmployeeName','UserEmail','UserRole','ActionType','Module',
+    'RecordID','Description','OldValue','NewValue','IPAddress',
+    'SessionID','Success'
+  ]
+});
+
+// -----------------------------------------------------------------------------
+// 1. ONE-TIME SETUP
+// -----------------------------------------------------------------------------
+
+function setupSystem() {
+  const operational = SpreadsheetApp.getActiveSpreadsheet();
+  PropertiesService.getScriptProperties()
+    .setProperty('OPERATIONAL_SPREADSHEET_ID', operational.getId());
+
+  Object.keys(HEADERS).forEach(name => ensureSheet_(operational, name, HEADERS[name]));
+
+  const folder = getOrCreatePdfRootFolder_();
+  PropertiesService.getScriptProperties().setProperty('PDF_ROOT_FOLDER_ID', folder.getId());
+  const reportFolders = getAcademicReportBaseFolders_();
+
+  const timetableStructure = validateTimetableMasterStructure_();
+  const importFolders = getOrCreateAscImportFolders_();
+
+  formatOperationalSheets_();
+
+  const result = {
+    success: true,
+    operationalSpreadsheetId: operational.getId(),
+    masterSpreadsheetId: CONFIG.MASTER_SPREADSHEET_ID,
+    pdfRootFolderId: folder.getId(),
+    performanceIndicatorsFolderId: reportFolders.pi.getId(),
+    dailyReportsFolderId: reportFolders.daily.getId(),
+    timetableMasterTabs: timetableStructure,
+    ascImportPendingFolderId: importFolders.pending.getId(),
+    ascImportPendingFolderUrl: `https://drive.google.com/drive/folders/${importFolders.pending.getId()}`,
+    tabs: Object.keys(HEADERS)
+  };
+
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
 }
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--beige);color:var(--text)}
-button,input,select,textarea{font:inherit}
-button{cursor:pointer}
-.lang-switch{position:absolute;top:16px;right:22px;z-index:5;display:flex;gap:8px}
-.lang-switch button{border:0;background:var(--navy);color:white;padding:8px 16px;border-radius:20px;font-weight:700}
-.hero{
-  min-height:255px;padding:34px 20px 38px;text-align:center;
-  background:linear-gradient(135deg,#e9dcc6 0%,#f7efe2 50%,#e3d1b5 100%);
-  border-bottom:5px solid var(--gold);position:relative
+
+function ensureSheet_(ss, name, headers) {
+  let sh = ss.getSheetByName(name);
+  if (!sh) sh = ss.insertSheet(name);
+
+  const current = sh.getRange(1, 1, 1, headers.length).getValues()[0];
+  const isEmpty = current.every(v => String(v).trim() === '');
+
+  if (isEmpty || sh.getLastRow() <= 1) {
+    sh.getRange(1, 1, 1, headers.length).setValues([headers]);
+  } else {
+    const existing = current.map(String);
+    const mismatch = headers.some((h, i) => existing[i] !== h);
+    if (mismatch) {
+      throw new Error(
+        `Header mismatch in "${name}". Please make Row 1 match the required headers before continuing.`
+      );
+    }
+  }
+
+  sh.setFrozenRows(1);
+  return sh;
 }
-.logo{width:210px;max-width:55vw;height:auto;display:block;margin:0 auto 16px}
-.hero h1{margin:6px 0;color:var(--navy);font-size:42px}
-.hero p{margin:8px 0;color:var(--navy);font-weight:700}
-.topnav{background:var(--navy);padding:17px;text-align:center}
-.topnav a{display:inline-block;border:2px solid var(--gold);padding:10px 20px;margin:5px;border-radius:24px;color:white;text-decoration:none;font-weight:700}
-.shell{max-width:1500px;margin:30px auto;padding:0 20px 40px}
-.account-bar{
-  background:white;border-radius:18px;padding:16px 20px;margin-bottom:20px;
-  box-shadow:0 8px 20px rgba(0,31,77,.10);display:flex;justify-content:space-between;gap:15px;align-items:center;flex-wrap:wrap
+
+function formatOperationalSheets_() {
+  const ss = getOperationalSS_();
+  Object.keys(HEADERS).forEach(name => {
+    const sh = ss.getSheetByName(name);
+    if (!sh) return;
+    sh.getRange(1, 1, 1, HEADERS[name].length)
+      .setFontWeight('bold')
+      .setWrap(true);
+    sh.autoResizeColumns(1, Math.min(HEADERS[name].length, 12));
+  });
 }
-.account-main{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.avatar{width:42px;height:42px;border-radius:50%;background:var(--navy);color:white;display:flex;align-items:center;justify-content:center;font-weight:800}
-.role-chip,.status-chip{display:inline-block;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;margin:2px}
-.role-chip{background:#f3e8bd;color:var(--navy)}
-.status-chip{background:#eef2f7;color:var(--navy)}
-.layout{display:grid;grid-template-columns:310px minmax(0,1fr);gap:22px}
-.sidebar{background:white;border-radius:20px;padding:18px;box-shadow:0 8px 20px rgba(0,31,77,.10);height:max-content;position:sticky;top:18px}
-.sidebar h3{color:var(--navy);margin:4px 5px 14px}
-.sidebar details{margin-bottom:10px}
-.sidebar summary{list-style:none;background:var(--navy);color:white;padding:12px 14px;border-radius:11px;font-weight:800;cursor:pointer}
-.sidebar summary::-webkit-details-marker{display:none}
-.sidebar button{width:calc(100% - 12px);margin:6px;padding:10px 12px;border:1px solid transparent;border-radius:9px;background:#f7f3eb;color:var(--navy);text-align:left;font-weight:700}
-.sidebar button:hover,.sidebar button.active{background:var(--gold);color:var(--navy);border-color:var(--gold2)}
-.content{min-width:0}
-.panel{display:none}
-.panel.active{display:block}
-.card{background:white;border-radius:20px;padding:24px;margin-bottom:18px;box-shadow:0 8px 20px rgba(0,31,77,.10)}
-.card h2,.card h3{color:var(--navy);margin-top:0}
-.notice{background:#fff8dd;border-left:5px solid var(--gold);padding:14px 16px;border-radius:10px;margin:12px 0}
-.error{background:#fde8e8;border-left-color:#b42318;color:#8b1d18}
-.success{background:#eaf7ef;border-left-color:#198754;color:#155b32}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
-.stat{background:#fbfaf7;border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center}
-.stat .num{font-size:28px;font-weight:800;color:var(--navy)}
-.stat .label{font-size:12px;color:var(--muted);margin-top:5px}
-label{display:block;font-weight:700;color:var(--navy);font-size:13px;margin:4px 0 6px}
-input,select,textarea{width:100%;border:1px solid #d7dce4;border-radius:9px;padding:10px 11px;background:white}
-textarea{min-height:90px;resize:vertical}
-.btn{border:0;border-radius:22px;padding:10px 16px;font-weight:800;margin:4px 4px 4px 0}
-.btn.primary{background:var(--navy);color:white}
-.btn.gold{background:var(--gold);color:var(--navy)}
-.btn.light{background:#edf1f5;color:var(--navy)}
-.btn.danger{background:#b42318;color:white}
-.btn.success{background:#18723f;color:white}
-.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px;background:white}
-table{width:100%;border-collapse:collapse;min-width:760px}
-th,td{padding:10px 11px;border-bottom:1px solid #ece8e1;text-align:left;vertical-align:top;font-size:13px}
-th{background:var(--navy);color:white;position:sticky;top:0;z-index:1}
-.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800}
-.b-green{background:#e4f5ea;color:var(--green)}
-.b-red{background:#fde5e5;color:var(--red)}
-.b-orange{background:#fff1d6;color:var(--orange)}
-.b-blue{background:#e6efff;color:var(--blue)}
-.b-gray{background:#eee;color:#555}
-.period-card{border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0;background:#fffdf9}
-.period-title{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
-.hidden{display:none!important}
-.small{font-size:12px;color:var(--muted)}
-.mono{font-family:Consolas,monospace;font-size:12px}
-.rtl{direction:rtl;text-align:right}
-.rtl .sidebar button{text-align:right}
-.rtl th,.rtl td{text-align:right}
-footer{text-align:center;color:var(--navy);padding:22px;font-size:12px}
-@media(max-width:1000px){.layout{grid-template-columns:1fr}.sidebar{position:static}.grid4,.grid3{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:680px){.hero h1{font-size:30px}.grid,.grid3,.grid4{grid-template-columns:1fr}.shell{padding:0 10px 25px}.card{padding:17px}.lang-switch{position:static;justify-content:center;padding-top:12px}.hero{padding-top:14px}}
-</style>
-</head>
-<body>
-<div class="lang-switch">
-  <button onclick="setLanguage('en')">English</button>
-  <button onclick="setLanguage('ar')">العربية</button>
-</div>
 
-<header class="hero">
-  <img src="logo.png" class="logo" alt="Delta Schools">
-  <div data-en>
-    <h1>Academic Reporting System</h1>
-    <p>Performance Indicators · Daily Learning Reports · Academic Monitoring</p>
-  </div>
-  <div data-ar class="hidden rtl">
-    <h1>نظام التقارير الأكاديمية</h1>
-    <p>مؤشرات الأداء · تقارير التعلم اليومية · المتابعة الأكاديمية</p>
-  </div>
-</header>
+// -----------------------------------------------------------------------------
+// 2. WEB APP ENDPOINTS
+// -----------------------------------------------------------------------------
 
-<nav class="topnav">
-  <a href="teacherhub.html">← Teacher Hub / بوابة المعلمين</a>
-  <a href="home.html">🏠 Main Portal / البوابة الرئيسية</a>
-</nav>
+function doGet(e) {
+  try {
+    const action = String((e && e.parameter && e.parameter.action) || '').trim();
 
-<div class="shell" id="app">
-  <div id="globalMessage"></div>
+    // When the web-app URL is opened normally, serve the Academic Reporting UI.
+    // API calls such as ?action=health continue to return JSON for diagnostics.
+    if (!action) {
+      return HtmlService.createHtmlOutputFromFile('Index')
+        .setTitle('Academic Reporting System | Delta Schools');
+    }
 
-  <div class="account-bar">
-    <div class="account-main">
-      <div class="avatar" id="avatar">DS</div>
-      <div>
-        <div id="employeeName"><strong>Connecting to Delta Schools…</strong></div>
-        <div class="small" id="employeeMeta"></div>
-        <div id="roleChips"></div>
-      </div>
-    </div>
-    <div>
-      <button class="btn light" onclick="refreshContext()">↻ Refresh</button>
-      <a class="btn primary" id="authorizeBtn" target="_blank" style="text-decoration:none;display:none">Authorize Google Account</a>
-    </div>
-  </div>
+    let data;
 
-  <div class="layout">
-    <aside class="sidebar">
-      <div data-en>
-        <h3>Academic Modules</h3>
-        <details open><summary>🏠 Main</summary><button data-module="dashboard">Dashboard</button></details>
-        <details open><summary>📝 Performance Indicator</summary>
-          <button data-module="pi">Weekly Performance Indicator</button>
-          <button data-module="pimonitor">PI Monitoring</button>
-        </details>
-        <details open><summary>📅 Daily Learning Report</summary>
-          <button data-module="daily">Today's Daily Report</button>
-          <button data-module="dailymonitor" class="requires-monitor">Daily Report Monitoring</button>
-        </details>
-        <details class="requires-review"><summary>✅ Academic Review</summary><button data-module="review">Review Queue</button></details>
-        <details class="requires-admin"><summary>🗓️ Timetable</summary><button data-module="timetable">Timetable Management</button></details>
-        <details class="requires-archive"><summary>📄 Reports</summary>
-          <button data-module="pdfs">PDF Archive</button>
-          <button data-module="history">History & Versions</button>
-        </details>
-        <details class="requires-admin"><summary>⚙️ Administration</summary><button data-module="admin">System Administration</button></details>
-      </div>
-      <div data-ar class="hidden rtl">
-        <h3>الوحدات الأكاديمية</h3>
-        <details open><summary>🏠 الرئيسية</summary><button data-module="dashboard">لوحة التحكم</button></details>
-        <details open><summary>📝 مؤشرات الأداء</summary>
-          <button data-module="pi">مؤشر الأداء الأسبوعي</button>
-          <button data-module="pimonitor">متابعة مؤشرات الأداء</button>
-        </details>
-        <details open><summary>📅 التقرير اليومي</summary>
-          <button data-module="daily">تقرير اليوم</button>
-          <button data-module="dailymonitor" class="requires-monitor">متابعة التقارير اليومية</button>
-        </details>
-        <details class="requires-review"><summary>✅ المراجعة الأكاديمية</summary><button data-module="review">قائمة المراجعة</button></details>
-        <details class="requires-admin"><summary>🗓️ الجداول</summary><button data-module="timetable">إدارة الجداول</button></details>
-        <details class="requires-archive"><summary>📄 التقارير</summary>
-          <button data-module="pdfs">أرشيف PDF</button>
-          <button data-module="history">السجل والإصدارات</button>
-        </details>
-        <details class="requires-admin"><summary>⚙️ الإدارة</summary><button data-module="admin">إدارة النظام</button></details>
-      </div>
-    </aside>
+    switch (action) {
+      case 'health':
+        data = health_();
+        break;
+      case 'me':
+        data = getMyContext_();
+        break;
+      case 'myAssignments':
+        data = getMyAssignments_();
+        break;
+      case 'myDailySchedule':
+        data = getMyDailySchedule_(e.parameter.date);
+        break;
+      case 'dailyReportForDate':
+        data = getDailyReportForDate_(e.parameter.date);
+        break;
+      case 'dailyCompletion':
+        data = getSectionDailyCompletion_(e.parameter.date, e.parameter.sectionId);
+        break;
+      case 'dailyMonitoring':
+        data = getDailyReportMonitoring_(e.parameter || {});
+        break;
+      case 'report':
+        data = getReport_(e.parameter.reportType, e.parameter.reportId);
+        break;
+      case 'piDetails':
+        data = getPiDetailsAuthorized_(e.parameter.reportId);
+        break;
+      case 'piSections':
+        data = getPiSectionsForGrade_(e.parameter.gradeId);
+        break;
+      case 'timetableImportFolder':
+        data = getTimetableImportFolderInfo_();
+        break;
+      case 'timetableVersions':
+        data = getTimetableVersionsForAdmin_();
+        break;
+      case 'pdf':
+        data = getPdfForDownload_(e.parameter.pdfId);
+        break;
+      case 'reviewQueue':
+        data = getAcademicReviewQueue_(e.parameter || {});
+        break;
+      case 'reviewHistory':
+        data = getAcademicReviewHistory_(e.parameter.reportType, e.parameter.reportId);
+        break;
+      case 'reportHistory':
+        data = getReportVersionHistory_(e.parameter.reportType, e.parameter.reportId);
+        break;
+      case 'pdfArchive':
+        data = getPdfArchive_(e.parameter || {});
+        break;
+      case 'downloadHistory':
+        data = getDownloadHistory_(e.parameter || {});
+        break;
+      default:
+        throw new Error(`Unknown GET action: ${action}`);
+    }
 
-    <main class="content">
-      <section id="dashboard" class="panel active">
-        <div class="card">
-          <h2 data-en>Dashboard</h2><h2 data-ar class="hidden rtl">لوحة التحكم</h2>
-          <p data-en>This dashboard adapts automatically to your employee role and assignments.</p>
-          <p data-ar class="hidden rtl">تتكيّف لوحة التحكم تلقائيًا حسب دور الموظف والتكليفات المسندة إليه.</p>
-          <div class="grid4">
-            <div class="stat"><div class="num" id="dashAssignments">—</div><div class="label">My Assignments</div></div>
-            <div class="stat"><div class="num" id="dashDaily">—</div><div class="label">Today's Report Lessons</div></div>
-            <div class="stat"><div class="num" id="dashReview">—</div><div class="label">Awaiting Review</div></div>
-            <div class="stat"><div class="num" id="dashPdfs">—</div><div class="label">Archived PDFs</div></div>
-          </div>
-        </div>
-        <div class="card">
-          <h3 data-en>My Assignments</h3><h3 data-ar class="hidden rtl">تكليفاتي</h3>
-          <div id="assignmentsTable" class="small">Loading…</div>
-        </div>
-      </section>
-
-      <section id="pi" class="panel">
-        <div class="card">
-          <h2 data-en>Weekly Performance Indicator</h2><h2 data-ar class="hidden rtl">مؤشر الأداء الأسبوعي</h2>
-          <div class="notice">One PI is shared by <strong>Grade + Subject + Week</strong>. It may apply to ALL sections or selected sections.</div>
-          <div class="grid3">
-            <div><label>Assignment</label><select id="piAssignment"></select></div>
-            <div><label>Semester ID</label><input id="piSemester" placeholder="S1"></div>
-            <div><label>Week ID</label><input id="piWeek" placeholder="AY26_S1_W01"></div>
-            <div><label>Applicable Sections</label>
-              <select id="piSectionMode" onchange="togglePiSections()">
-                <option value="ALL">ALL Sections</option>
-                <option value="SELECTED">SELECTED Sections</option>
-              </select>
-            </div>
-            <div id="piSectionSelectWrap" class="hidden"><label>Select Sections</label><select id="piSections" multiple size="5"></select></div>
-            <div><label>Weekly Periods</label><input id="piPeriodCount" type="number" min="1" value="1"></div>
-          </div>
-          <div class="actions">
-            <button class="btn gold" onclick="preparePi()">Prepare PI Rows</button>
-            <button class="btn light" onclick="loadPiSections()">Load Sections</button>
-          </div>
-          <div id="piRows"></div>
-          <div class="actions hidden" id="piActionBar">
-            <button class="btn primary" onclick="saveAllPi()">Save Draft</button>
-            <button class="btn success" onclick="submitCurrentPi()">Submit for Review</button>
-          </div>
-        </div>
-      </section>
-
-      <section id="pimonitor" class="panel">
-        <div class="card">
-          <h2 data-en>PI Monitoring</h2><h2 data-ar class="hidden rtl">متابعة مؤشرات الأداء</h2>
-          <div class="notice">PI monitoring will use the approved/submitted PI records and review queue. Select the filters below to inspect PI status within your scope.</div>
-          <div class="grid3">
-            <div><label>Grade</label><input id="pimonGrade" placeholder="G1"></div>
-            <div><label>Week</label><input id="pimonWeek" placeholder="AY26_S1_W01"></div>
-            <div><label>Status</label><select id="pimonStatus"><option value="">All</option><option>Draft</option><option>Submitted</option><option>Under Review</option><option>Returned</option><option>Resubmitted</option><option>Approved</option></select></div>
-          </div>
-          <div class="actions"><button class="btn primary" onclick="loadPiMonitoring()">Load PI Status</button></div>
-          <div id="piMonitoringResult"></div>
-        </div>
-      </section>
-
-      <section id="daily" class="panel">
-        <div class="card">
-          <h2 data-en>Today's Daily Learning Report</h2><h2 data-ar class="hidden rtl">التقرير اليومي للتعلم</h2>
-          <div class="grid">
-            <div><label>Date</label><input id="dailyDate" type="date"></div>
-            <div class="actions" style="align-items:end"><button class="btn primary" onclick="loadDailySchedule()">Load My Timetable</button></div>
-          </div>
-          <div id="dailySchedule"></div>
-        </div>
-      </section>
-
-      <section id="dailymonitor" class="panel">
-        <div class="card">
-          <h2 data-en>Daily Report Monitoring</h2><h2 data-ar class="hidden rtl">متابعة التقارير اليومية</h2>
-          <div class="grid4">
-            <div><label>Date</label><input id="monDate" type="date"></div>
-            <div><label>Grade</label><input id="monGrade" placeholder="Optional"></div>
-            <div><label>Section</label><input id="monSection" placeholder="Optional"></div>
-            <div><label>Status</label><select id="monStatus"><option value="">All</option><option>Not Started</option><option>Draft</option><option>Submitted</option><option>Under Review</option><option>Returned</option><option>Approved</option></select></div>
-          </div>
-          <div class="actions"><button class="btn primary" onclick="loadDailyMonitoring()">Load Monitoring</button></div>
-          <div id="monitoringStats"></div>
-          <div id="monitoringTable"></div>
-        </div>
-      </section>
-
-      <section id="review" class="panel">
-        <div class="card">
-          <h2 data-en>Academic Review Queue</h2><h2 data-ar class="hidden rtl">قائمة المراجعة الأكاديمية</h2>
-          <div class="grid4">
-            <div><label>Report Type</label><select id="reviewType"><option value="">PI + Daily</option><option value="PI">PI</option><option value="DAILY">Daily</option></select></div>
-            <div><label>Status</label><select id="reviewStatus"><option value="">All</option><option>Submitted</option><option>Under Review</option><option>Resubmitted</option><option>Returned</option><option>Approved</option></select></div>
-            <div><label>Grade</label><input id="reviewGrade"></div>
-            <div><label>Subject</label><input id="reviewSubject"></div>
-          </div>
-          <div class="actions"><button class="btn primary" onclick="loadReviewQueue()">Load Review Queue</button></div>
-          <div id="reviewStats"></div>
-          <div id="reviewTable"></div>
-        </div>
-      </section>
-
-      <section id="timetable" class="panel">
-        <div class="card">
-          <h2 data-en>Timetable Management</h2><h2 data-ar class="hidden rtl">إدارة الجداول</h2>
-          <div id="timetableFolderInfo"></div>
-          <div class="grid">
-            <div><label>Effective Date for Import</label><input id="ttEffectiveDate" type="date"></div>
-            <div class="actions" style="align-items:end"><button class="btn gold" onclick="runTimetableImport()">Import Pending aSc Files</button></div>
-          </div>
-          <div class="actions"><button class="btn light" onclick="loadTimetableAdmin()">Refresh Timetable Versions</button></div>
-          <div id="timetableVersions"></div>
-        </div>
-      </section>
-
-      <section id="pdfs" class="panel">
-        <div class="card">
-          <h2 data-en>PDF Archive</h2><h2 data-ar class="hidden rtl">أرشيف التقارير PDF</h2>
-          <div class="grid4">
-            <div><label>Type</label><select id="pdfType"><option value="">All</option><option value="PI_COMBINED">Combined PI</option><option value="DAILY_COMBINED">Combined Daily</option></select></div>
-            <div><label>Grade</label><input id="pdfGrade"></div>
-            <div><label>Section</label><input id="pdfSection"></div>
-            <div><label>Week</label><input id="pdfWeek"></div>
-          </div>
-          <div class="actions"><button class="btn primary" onclick="loadPdfArchive()">Load Archive</button></div>
-
-          <h3>Generate Final Combined PDF</h3>
-          <div class="grid">
-            <div class="period-card">
-              <strong>Weekly PI</strong>
-              <label>Grade ID</label><input id="genPiGrade">
-              <label>Week ID</label><input id="genPiWeek">
-              <button class="btn gold" onclick="generateFinalPi()">Generate Final PI</button>
-            </div>
-            <div class="period-card">
-              <strong>Daily Report</strong>
-              <label>Section ID</label><input id="genDailySection">
-              <label>Date</label><input id="genDailyDate" type="date">
-              <button class="btn gold" onclick="generateFinalDaily()">Generate Final Daily Report</button>
-            </div>
-          </div>
-          <div id="pdfArchiveTable"></div>
-        </div>
-      </section>
-
-      <section id="history" class="panel">
-        <div class="card">
-          <h2 data-en>History & Versions</h2><h2 data-ar class="hidden rtl">السجل والإصدارات</h2>
-          <div class="grid3">
-            <div><label>Report Type</label><select id="histType"><option value="PI">PI</option><option value="DAILY">Daily</option></select></div>
-            <div><label>Report ID</label><input id="histReportId"></div>
-            <div class="actions" style="align-items:end"><button class="btn primary" onclick="loadHistory()">Load History</button></div>
-          </div>
-          <div id="historyResult"></div>
-        </div>
-      </section>
-
-      <section id="admin" class="panel">
-        <div class="card">
-          <h2 data-en>System Administration</h2><h2 data-ar class="hidden rtl">إدارة النظام</h2>
-          <div class="notice">Master Data remains the controlled source for Employees, Subjects, Grades, Sections, Assignments, Supervisor Scopes, Principal Scopes, permissions, calendar and timetable mappings.</div>
-          <div id="adminSummary"></div>
-        </div>
-      </section>
-    </main>
-  </div>
-</div>
-
-<footer>Delta Schools · Academic Reporting System · AY2026–2027</footer>
-
-<script>
-const API_URL='https://script.google.com/a/macros/delta.edu.sa/s/AKfycbzk5TcfmUfiiPN7nDk5bo1Cb-NNW01ZonbMXh8eef4_16-vmEIRkeIFONq_L9kXekk/exec';
-let ME=null, LANG='en', CURRENT_PI_REPORT_ID='', CURRENT_ASSIGNMENT=null;
-
-function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function setMessage(text,type='success'){
-  document.getElementById('globalMessage').innerHTML=`<div class="notice ${type}">${esc(text)}</div>`;
-  window.scrollTo({top:0,behavior:'smooth'});
-  if(type==='success')setTimeout(()=>document.getElementById('globalMessage').innerHTML='',5000);
-}
-function statusBadge(s){
-  s=String(s||'Not Started');
-  let c='b-gray';
-  if(['Approved','Final'].includes(s))c='b-green';
-  else if(['Submitted','Resubmitted','Under Review'].includes(s))c='b-blue';
-  else if(['Returned'].includes(s))c='b-red';
-  else if(['Draft'].includes(s))c='b-orange';
-  return `<span class="badge ${c}">${esc(s)}</span>`;
-}
-async function apiGet(action,params={}){
-  const u=new URL(API_URL);u.searchParams.set('action',action);
-  Object.entries(params).forEach(([k,v])=>{if(v!==''&&v!==undefined&&v!==null)u.searchParams.set(k,v)});
-  const r=await fetch(u.toString(),{credentials:'include',redirect:'follow'});
-  const txt=await r.text();let j;
-  try{j=JSON.parse(txt)}catch(e){throw new Error('The backend response could not be read. Open the authorization link once, then refresh.')}
-  if(!j.success)throw new Error(j.error||'Backend error');
-  return j.data;
-}
-async function apiPost(payload){
-  const r=await fetch(API_URL,{method:'POST',credentials:'include',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
-  const txt=await r.text();let j;
-  try{j=JSON.parse(txt)}catch(e){throw new Error('The backend response could not be read. Please authorize the Apps Script web app first.')}
-  if(!j.success)throw new Error(j.error||'Backend error');
-  return j.data;
-}
-function setLanguage(lang){
-  LANG=lang;
-  document.querySelectorAll('[data-en]').forEach(x=>x.classList.toggle('hidden',lang!=='en'));
-  document.querySelectorAll('[data-ar]').forEach(x=>x.classList.toggle('hidden',lang!=='ar'));
-  document.body.classList.toggle('rtl',lang==='ar');
-}
-function showModule(id){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  document.querySelectorAll('.sidebar button').forEach(b=>b.classList.toggle('active',b.dataset.module===id));
-  if(id==='daily')loadDailySchedule();
-  if(id==='review')loadReviewQueue();
-  if(id==='timetable')loadTimetableAdmin();
-  if(id==='pdfs')loadPdfArchive();
-}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-module]');if(b)showModule(b.dataset.module)});
-
-async function refreshContext(){
-  try{
-    ME=await apiGet('me');
-    renderContext();
-    await loadDashboard();
-  }catch(e){
-    document.getElementById('employeeName').innerHTML='<strong>Authorization required</strong>';
-    document.getElementById('employeeMeta').textContent=e.message;
-    const a=document.getElementById('authorizeBtn');a.style.display='inline-block';a.href=API_URL+'?action=me';
-    setMessage(e.message,'error');
+    return jsonResponse_({ success: true, data });
+  } catch (err) {
+    return jsonResponse_({ success: false, error: safeError_(err) });
   }
 }
-function renderContext(){
-  const emp=ME.employee||{},roles=ME.roles||[],assignments=ME.assignments||[];
-  document.getElementById('employeeName').innerHTML=`<strong>${esc(emp.EmployeeNameEN||'')}</strong>${emp.EmployeeNameAR?` · ${esc(emp.EmployeeNameAR)}`:''}`;
-  document.getElementById('employeeMeta').textContent=`${emp.EmployeeID||''} · ${ME.email||''}`;
-  document.getElementById('roleChips').innerHTML=roles.map(r=>`<span class="role-chip">${esc(r)}</span>`).join('');
-  document.getElementById('avatar').textContent=(emp.EmployeeNameEN||'DS').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
-  document.getElementById('authorizeBtn').style.display='none';
 
-  const review=roles.some(r=>['Supervisor','SystemAdmin'].includes(r));
-  const monitor=roles.some(r=>['Supervisor','Principal','GeneralAcademicManager','SystemAdmin'].includes(r));
-  const admin=roles.includes('SystemAdmin');
-  const archive=roles.some(r=>['Supervisor','Principal','GeneralAcademicManager','SystemAdmin','ReportPersonnel'].includes(r));
-  document.querySelectorAll('.requires-review').forEach(x=>x.classList.toggle('hidden',!review));
-  document.querySelectorAll('.requires-monitor').forEach(x=>x.classList.toggle('hidden',!monitor));
-  document.querySelectorAll('.requires-admin').forEach(x=>x.classList.toggle('hidden',!admin));
-  document.querySelectorAll('.requires-archive').forEach(x=>x.classList.toggle('hidden',!archive));
+function doPost(e) {
+  try {
+    const body = parseRequestBody_(e);
+    const action = String(body.action || '').trim();
+    if (!action) throw new Error('Missing action.');
 
-  const opts=assignments.map(a=>`<option value="${esc(a.AssignmentID)}" data-grade="${esc(a.GradeID)}" data-subject="${esc(a.SubjectID)}">${esc(a.GradeID)} · ${esc(a.SectionID||'ALL')} · ${esc(a.SubjectID)}</option>`).join('');
-  document.getElementById('piAssignment').innerHTML='<option value="">Select assignment</option>'+opts;
-  document.getElementById('dashAssignments').textContent=assignments.length;
-  document.getElementById('adminSummary').innerHTML=`<div class="grid3"><div class="stat"><div class="num">${assignments.length}</div><div class="label">Teacher Assignments</div></div><div class="stat"><div class="num">${roles.length}</div><div class="label">Detected Roles</div></div><div class="stat"><div class="num">${esc(emp.EmployeeID||'—')}</div><div class="label">Employee ID</div></div></div>`;
-}
-async function loadDashboard(){
-  renderAssignments();
-  try{const d=await apiGet('myDailySchedule',{date:today()});document.getElementById('dashDaily').textContent=d.count||0}catch(e){document.getElementById('dashDaily').textContent='—'}
-  if((ME.roles||[]).some(r=>['Supervisor','SystemAdmin'].includes(r))){
-    try{const q=await apiGet('reviewQueue');document.getElementById('dashReview').textContent=q.counts?.awaitingReview??0}catch(e){}
+    let result;
+
+    switch (action) {
+      case 'savePI':
+      case 'savePIBatch':
+        result = savePIBatch_(body);
+        break;
+
+      case 'submitPI':
+        result = submitPI_(body);
+        break;
+
+      case 'loadDailySchedule':
+      case 'createOrLoadDailyReportFromTimetable':
+        result = createOrLoadDailyReportFromTimetable_(body);
+        break;
+
+      case 'saveDailyReport':
+      case 'saveDailyReportBatch':
+        result = saveDailyBatch_(body);
+        break;
+
+      case 'submitDailyReport':
+        result = submitDaily_(body);
+        break;
+
+      case 'startReview':
+        result = changeReportStatus_(body, 'REVIEW');
+        break;
+
+      case 'approveReport':
+        result = changeReportStatus_(body, 'APPROVE');
+        break;
+
+      case 'returnReport':
+        result = changeReportStatus_(body, 'RETURN');
+        break;
+
+      case 'resubmitReport':
+        result = changeReportStatus_(body, 'RESUBMIT');
+        break;
+
+      case 'logMonitoring':
+        result = logMonitoring_(body);
+        break;
+
+      case 'generatePDF':
+        throw new Error('Individual subject/period PDFs are disabled. Use generateFinalPI or generateFinalDailyReport.');
+
+      case 'generateFinalPI':
+        result = generateCombinedPiPdf_(body);
+        break;
+
+      case 'generateFinalDailyReport':
+        result = generateCombinedDailyPdf_(body);
+        break;
+
+      case 'prepareDownload':
+        result = preparePdfDownload_(body.pdfId);
+        break;
+
+      case 'importAscTimetables':
+        result = importAscTimetablesFromDrive_(body);
+        break;
+
+      default:
+        throw new Error(`Unknown POST action: ${action}`);
+    }
+
+    return jsonResponse_({ success: true, data: result });
+  } catch (err) {
+    try {
+      audit_({
+        actionType: 'ERROR',
+        module: 'API',
+        recordId: '',
+        description: safeError_(err),
+        success: false
+      });
+    } catch (_) {}
+
+    return jsonResponse_({ success: false, error: safeError_(err) });
   }
-  if((ME.roles||[]).some(r=>['Supervisor','Principal','GeneralAcademicManager','SystemAdmin','ReportPersonnel'].includes(r))){
-    try{const p=await apiGet('pdfArchive');document.getElementById('dashPdfs').textContent=p.count??0}catch(e){}
-  }
-}
-function renderAssignments(){
-  const a=ME?.assignments||[];
-  if(!a.length){document.getElementById('assignmentsTable').innerHTML='<div class="notice">No active TeacherAssignments were found for this employee.</div>';return}
-  document.getElementById('assignmentsTable').innerHTML=`<div class="table-wrap"><table><thead><tr><th>Assignment</th><th>Grade</th><th>Section</th><th>Subject</th><th>PI</th><th>Daily</th></tr></thead><tbody>${a.map(x=>`<tr><td>${esc(x.AssignmentID)}</td><td>${esc(x.GradeID)}</td><td>${esc(x.SectionID||'')}</td><td>${esc(x.SubjectID)}</td><td>${esc(x.CanEditPI)}</td><td>${esc(x.CanEditDailyReport)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 
-function selectedAssignment(){
-  const id=document.getElementById('piAssignment').value;
-  return (ME?.assignments||[]).find(a=>String(a.AssignmentID)===id);
+/**
+ * Public bridge for the Apps Script-hosted HTML interface.
+ * google.script.run can call public functions, but cannot call private helpers
+ * whose names end with an underscore.
+ */
+function clientGet(actionInput, params) {
+  const action = String(actionInput || '').trim();
+  params = params || {};
+
+  switch (action) {
+    case 'health': return { success: true, data: health_() };
+    case 'me': return { success: true, data: getMyContext_() };
+    case 'myAssignments': return { success: true, data: getMyAssignments_() };
+    case 'myDailySchedule': return { success: true, data: getMyDailySchedule_(params.date) };
+    case 'dailyReportForDate': return { success: true, data: getDailyReportForDate_(params.date) };
+    case 'dailyCompletion': return { success: true, data: getSectionDailyCompletion_(params.date, params.sectionId) };
+    case 'dailyMonitoring': return { success: true, data: getDailyReportMonitoring_(params) };
+    case 'report': return { success: true, data: getReport_(params.reportType, params.reportId) };
+    case 'piDetails': return { success: true, data: getPiDetailsAuthorized_(params.reportId || params.piReportId) };
+    case 'piSections': return { success: true, data: getPiSectionsForGrade_(params.gradeId) };
+    case 'timetableImportFolder': return { success: true, data: getTimetableImportFolderInfo_() };
+    case 'timetableVersions': return { success: true, data: getTimetableVersionsForAdmin_() };
+    case 'pdf': return { success: true, data: getPdfForDownload_(params.pdfId) };
+    case 'reviewQueue': return { success: true, data: getAcademicReviewQueue_(params) };
+    case 'reviewHistory': return { success: true, data: getAcademicReviewHistory_(params.reportType, params.reportId) };
+    case 'reportHistory': return { success: true, data: getReportVersionHistory_(params.reportType, params.reportId) };
+    case 'pdfArchive': return { success: true, data: getPdfArchive_(params) };
+    case 'downloadHistory': return { success: true, data: getDownloadHistory_(params) };
+    default: throw new Error(`Unknown client GET action: ${action}`);
+  }
 }
-async function loadPiSections(){
-  const a=selectedAssignment();if(!a)return setMessage('Select an assignment first.','error');
-  try{
-    const rows=await apiGet('piSections',{gradeId:a.GradeID});
-    document.getElementById('piSections').innerHTML=rows.map(s=>`<option value="${esc(s.SectionID)}">${esc(s.SectionNameEN||s.SectionName||s.SectionID)} (${esc(s.SectionID)})</option>`).join('');
-    setMessage('Sections loaded.');
-  }catch(e){setMessage(e.message,'error')}
+
+function clientPost(body) {
+  body = body || {};
+  const action = String(body.action || '').trim();
+  if (!action) throw new Error('Missing action.');
+
+  switch (action) {
+    case 'savePI':
+    case 'savePIBatch': return { success: true, data: savePIBatch_(body) };
+    case 'submitPI': return { success: true, data: submitPI_(body) };
+    case 'loadDailySchedule':
+    case 'createOrLoadDailyReportFromTimetable': return { success: true, data: createOrLoadDailyReportFromTimetable_(body) };
+    case 'saveDailyReport':
+    case 'saveDailyReportBatch': return { success: true, data: saveDailyBatch_(body) };
+    case 'submitDailyReport': return { success: true, data: submitDaily_(body) };
+    case 'startReview': return { success: true, data: changeReportStatus_(body, 'REVIEW') };
+    case 'approveReport': return { success: true, data: changeReportStatus_(body, 'APPROVE') };
+    case 'returnReport': return { success: true, data: changeReportStatus_(body, 'RETURN') };
+    case 'resubmitReport': return { success: true, data: changeReportStatus_(body, 'RESUBMIT') };
+    case 'logMonitoring': return { success: true, data: logMonitoring_(body) };
+    case 'generatePDF': throw new Error('Individual PDFs are disabled. Generate the consolidated PI or Daily Report instead.');
+    case 'generateFinalPI': return { success: true, data: generateCombinedPiPdf_(body) };
+    case 'generateFinalDailyReport': return { success: true, data: generateCombinedDailyPdf_(body) };
+    case 'prepareDownload': return { success: true, data: preparePdfDownload_(body.pdfId) };
+    case 'importAscTimetables': return { success: true, data: importAscTimetablesFromDrive_(body) };
+    default: throw new Error(`Unknown client POST action: ${action}`);
+  }
 }
-function togglePiSections(){document.getElementById('piSectionSelectWrap').classList.toggle('hidden',document.getElementById('piSectionMode').value!=='SELECTED')}
-function preparePi(){
-  const a=selectedAssignment();const n=Math.max(1,Number(document.getElementById('piPeriodCount').value)||1);
-  if(!a)return setMessage('Select an assignment first.','error');
-  CURRENT_ASSIGNMENT=a;CURRENT_PI_REPORT_ID='';
-  document.getElementById('piRows').innerHTML=Array.from({length:n},(_,i)=>`<div class="period-card" data-pi-period="${i+1}">
-    <div class="period-title"><strong>Weekly Period ${i+1}</strong><span class="small">${esc(a.GradeID)} · ${esc(a.SubjectID)}</span></div>
-    <div class="grid">
-      <div><label>Lesson</label><textarea data-field="lesson"></textarea></div>
-      <div><label>Classwork</label><textarea data-field="classwork"></textarea></div>
-      <div><label>Performance Task</label><textarea data-field="performanceTask"></textarea></div>
-      <div><label>Objectives</label><textarea data-field="objectives"></textarea></div>
-    </div></div>`).join('');
-  document.getElementById('piActionBar').classList.remove('hidden');
+
+function jsonResponse_(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }
-function piSectionPayload(){
-  const mode=document.getElementById('piSectionMode').value;
-  return {mode,sections:mode==='SELECTED'?[...document.getElementById('piSections').selectedOptions].map(o=>o.value).join(','):''};
+
+function parseRequestBody_(e) {
+  if (!e) return {};
+  const raw = e.postData && e.postData.contents ? e.postData.contents : '';
+  if (!raw) return e.parameter || {};
+
+  try {
+    return JSON.parse(raw);
+  } catch (_) {
+    return e.parameter || {};
+  }
 }
-async function saveAllPi(){
-  const a=CURRENT_ASSIGNMENT||selectedAssignment(),week=document.getElementById('piWeek').value.trim(),sem=document.getElementById('piSemester').value.trim();
-  if(!a||!week||!sem)return setMessage('Assignment, Semester ID and Week ID are required.','error');
-  const sec=piSectionPayload();
-  if(sec.mode==='SELECTED'&&!sec.sections)return setMessage('Select at least one section.','error');
-  const items=[...document.querySelectorAll('[data-pi-period]')].map(card=>({
-    assignmentId:a.AssignmentID,weekId:week,semesterId:sem,periodNumber:Number(card.dataset.piPeriod),
-    applicableSectionsMode:sec.mode,applicableSections:sec.sections,
-    lesson:card.querySelector('[data-field="lesson"]').value,
-    classwork:card.querySelector('[data-field="classwork"]').value,
-    performanceTask:card.querySelector('[data-field="performanceTask"]').value,
-    objectives:card.querySelector('[data-field="objectives"]').value
+
+// -----------------------------------------------------------------------------
+// 3. HEALTH / USER CONTEXT / AUTHORIZATION
+// -----------------------------------------------------------------------------
+
+function health_() {
+  const operational = getOperationalSS_();
+  const master = getMasterSS_();
+  return {
+    status: 'ok',
+    time: nowIso_(),
+    operationalSpreadsheet: operational.getName(),
+    masterSpreadsheet: master.getName(),
+    academicYear: CONFIG.ACADEMIC_YEAR_ID
+  };
+}
+
+function getMyContext_() {
+  const user = requireCurrentEmployee_();
+  const assignments = getActiveTeacherAssignments_(user.employee.EmployeeID);
+  const roles = getUserRoles_(user.employee.EmployeeID, user.employee.JobTitle);
+
+  return {
+    email: user.email,
+    employee: user.employee,
+    roles,
+    assignments
+  };
+}
+
+function requireCurrentEmployee_() {
+  const email = normalizeEmail_(Session.getActiveUser().getEmail());
+  if (!email) {
+    throw new Error(
+      'Your Google Workspace email could not be identified. Deploy the web app so users authorize/access it with their school account.'
+    );
+  }
+
+  const employees = readMasterTable_('Employees');
+  const employee = employees.find(r =>
+    normalizeEmail_(r.SchoolEmail) === email && isTrue_(r.Active)
+  );
+
+  if (!employee) {
+    throw new Error(`No active employee record was found for ${email}.`);
+  }
+
+  return { email, employee };
+}
+
+function getUserRoles_(employeeId, jobTitle) {
+  const roles = [];
+
+  if (getActiveTeacherAssignments_(employeeId).length) roles.push('Teacher');
+  if (getActiveRowsByEmployee_('SupervisorAssignments', employeeId).length) roles.push('Supervisor');
+  if (getActiveRowsByEmployee_('PrincipalScopes', employeeId).length) roles.push('Principal');
+  if (getActiveRowsByEmployee_('ReportPersonnelScopes', employeeId).length) roles.push('ReportPersonnel');
+
+  const admin = getActiveRowsByEmployee_('AdminPermissions', employeeId);
+  if (admin.length) roles.push('SystemAdmin');
+
+  if (String(jobTitle || '').toLowerCase().includes('general academic manager')) {
+    roles.push('GeneralAcademicManager');
+  }
+
+  return [...new Set(roles)];
+}
+
+function getActiveRowsByEmployee_(sheetName, employeeId) {
+  const rows = readMasterTable_(sheetName);
+  return rows.filter(r =>
+    String(r.EmployeeID) === String(employeeId) &&
+    (r.Active === '' || isTrue_(r.Active))
+  );
+}
+
+function isFullAdmin_(employeeId) {
+  const rows = getActiveRowsByEmployee_('AdminPermissions', employeeId);
+  return rows.some(r => isTrue_(r.IsSystemAdmin));
+}
+
+function canManageTimetables_(employeeId) {
+  const rows = getActiveRowsByEmployee_('AdminPermissions', employeeId);
+  return rows.some(r =>
+    isTrue_(r.IsSystemAdmin) || isTrue_(r.ManageTimetables)
+  );
+}
+
+// -----------------------------------------------------------------------------
+// 4. MASTER DATA READERS
+// -----------------------------------------------------------------------------
+
+function getMasterSS_() {
+  return SpreadsheetApp.openById(CONFIG.MASTER_SPREADSHEET_ID);
+}
+
+function getOperationalSS_() {
+  const id = PropertiesService.getScriptProperties().getProperty('OPERATIONAL_SPREADSHEET_ID');
+  if (id) return SpreadsheetApp.openById(id);
+
+  // Works while script remains bound to Operational spreadsheet.
+  return SpreadsheetApp.getActiveSpreadsheet();
+}
+
+function readMasterTable_(sheetName) {
+  const sh = getMasterSS_().getSheetByName(sheetName);
+  if (!sh) throw new Error(`Master Data tab "${sheetName}" was not found.`);
+  return sheetToObjects_(sh);
+}
+
+function sheetToObjects_(sh) {
+  const lastRow = sh.getLastRow();
+  const lastCol = sh.getLastColumn();
+  if (lastRow < 2 || lastCol < 1) return [];
+
+  const values = sh.getRange(1, 1, lastRow, lastCol).getValues();
+  const headers = values[0].map(h => String(h).trim());
+
+  return values.slice(1)
+    .filter(row => row.some(v => String(v).trim() !== ''))
+    .map((row, index) => {
+      const obj = { _row: index + 2 };
+      headers.forEach((h, i) => {
+        if (h) obj[h] = row[i];
+      });
+      return obj;
+    });
+}
+
+function getMyAssignments_() {
+  const user = requireCurrentEmployee_();
+  return getActiveTeacherAssignments_(user.employee.EmployeeID);
+}
+
+function getActiveTeacherAssignments_(employeeId) {
+  return readMasterTable_('TeacherAssignments')
+    .filter(r =>
+      String(r.EmployeeID) === String(employeeId) &&
+      (r.Active === '' || isTrue_(r.Active))
+    );
+}
+
+function getAssignmentById_(assignmentId) {
+  const row = readMasterTable_('TeacherAssignments')
+    .find(r => String(r.AssignmentID) === String(assignmentId) && (r.Active === '' || isTrue_(r.Active)));
+
+  if (!row) throw new Error(`Active TeacherAssignment "${assignmentId}" was not found.`);
+  return row;
+}
+
+function getSubjectById_(subjectId) {
+  return readMasterTable_('Subjects')
+    .find(r => String(r.SubjectID) === String(subjectId));
+}
+
+function getSectionById_(sectionId) {
+  return readMasterTable_('Sections')
+    .find(r => String(r.SectionID) === String(sectionId));
+}
+
+function getGradeSortOrder_(gradeId) {
+  const row = readMasterTable_('Grades')
+    .find(r => String(r.GradeID) === String(gradeId));
+  if (!row) return null;
+  return Number(row.SortOrder);
+}
+
+function getWeekById_(weekId) {
+  return readMasterTable_('Weeks')
+    .find(r => String(r.WeekID) === String(weekId));
+}
+
+// -----------------------------------------------------------------------------
+// 5. PERFORMANCE INDICATOR
+// -----------------------------------------------------------------------------
+
+function savePIBatch_(body) {
+  const user = requireCurrentEmployee_();
+  const items = Array.isArray(body.items) ? body.items : [body.item || body];
+
+  if (!items.length) throw new Error('No PI entries supplied.');
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(CONFIG.LOCK_TIMEOUT_MS);
+
+  try {
+    const ss = getOperationalSS_();
+    const reportSh = ss.getSheetByName(SHEETS.PI);
+    const detailSh = ss.getSheetByName(SHEETS.PI_DETAILS);
+
+    if (!detailSh) {
+      throw new Error('Operational tab "PerformanceIndicatorDetails" was not found. Run setupSystem() once after adding the updated code.');
+    }
+
+    const reportRows = sheetToObjects_(reportSh);
+    const detailRows = sheetToObjects_(detailSh);
+    const results = [];
+
+    items.forEach(item => {
+      const assignment = getAssignmentById_(item.assignmentId || item.AssignmentID);
+
+      if (String(assignment.EmployeeID) !== String(user.employee.EmployeeID) &&
+          !isFullAdmin_(user.employee.EmployeeID)) {
+        throw new Error('You cannot edit another teacher’s PI assignment.');
+      }
+
+      if (!isTrue_(assignment.CanEditPI) && !isFullAdmin_(user.employee.EmployeeID)) {
+        throw new Error('This assignment does not allow PI editing.');
+      }
+
+      const weekId = String(item.weekId || item.WeekID || '').trim();
+      const semesterId = String(item.semesterId || item.SemesterID || '').trim();
+      const periodNumber = Number(
+        item.periodNumber || item.PeriodNumber ||
+        item.weeklyPeriodNumber || item.WeeklyPeriodNumber
+      );
+
+      if (!weekId) throw new Error('WeekID is required.');
+      if (!semesterId) throw new Error('SemesterID is required.');
+      if (!periodNumber || periodNumber < 1) {
+        throw new Error('PeriodNumber must be 1 or greater.');
+      }
+
+      // PI is shared across the selected section scope.
+      // ALL = one PI covering every active section in the grade.
+      // SELECTED = a separate PI can exist for a specific section group.
+      const sectionSelection = normalizePiSectionSelection_(
+        assignment.GradeID,
+        item.applicableSectionsMode || item.ApplicableSectionsMode ||
+          body.applicableSectionsMode || body.ApplicableSectionsMode || 'ALL',
+        item.applicableSections || item.ApplicableSections ||
+          body.applicableSections || body.ApplicableSections || ''
+      );
+
+      const reportId = makePiReportId_(
+        CONFIG.ACADEMIC_YEAR_ID,
+        weekId,
+        assignment.GradeID,
+        assignment.SubjectID,
+        sectionSelection.mode,
+        sectionSelection.sections
+      );
+
+      let report = reportRows.find(r =>
+        String(r.PIReportID) === reportId && isTrueOrBlank_(r.Active)
+      );
+
+      // If another teacher already created the same Grade + Subject + Week PI,
+      // keep the original header owner/assignment. Other authorized teachers
+      // edit the SAME PI, and LastUpdatedBy on details records who changed it.
+      if (!report) {
+        report = {
+          PIReportID: reportId,
+          AcademicYearID: CONFIG.ACADEMIC_YEAR_ID,
+          SemesterID: semesterId,
+          WeekID: weekId,
+          AssignmentID: assignment.AssignmentID,
+          EmployeeID: user.employee.EmployeeID,
+          GradeID: assignment.GradeID,
+          SubjectID: assignment.SubjectID,
+          ApplicableSectionsMode: sectionSelection.mode,
+          ApplicableSections: sectionSelection.sections,
+          Status: 'Draft',
+          SubmittedDateTime: '',
+          ReviewedBy: '',
+          ReviewedDateTime: '',
+          ReviewComment: '',
+          Version: 1,
+          Active: true
+        };
+
+        appendObjectRow_(reportSh, HEADERS[SHEETS.PI], report);
+        report = { ...report, _row: reportSh.getLastRow() };
+        reportRows.push(report);
+      } else {
+        if (!canTeacherEditPi_(user.employee.EmployeeID, report) &&
+            !isFullAdmin_(user.employee.EmployeeID)) {
+          throw new Error('You are not assigned to this grade and subject PI.');
+        }
+
+        // Approved/under-review PI is not silently editable.
+        if (['Submitted', 'Resubmitted', 'Under Review', 'Approved'].includes(String(report.Status))) {
+          throw new Error(`This PI is currently ${report.Status} and cannot be edited.`);
+        }
+
+        updateObjectRow_(reportSh, HEADERS[SHEETS.PI], report._row, {
+          SemesterID: semesterId,
+          ApplicableSectionsMode: sectionSelection.mode,
+          ApplicableSections: sectionSelection.sections,
+          Active: true
+        });
+
+        report.SemesterID = semesterId;
+        report.ApplicableSectionsMode = sectionSelection.mode;
+        report.ApplicableSections = sectionSelection.sections;
+      }
+
+      const detailId = makePiDetailId_(reportId, periodNumber);
+      const existingDetail = detailRows.find(r =>
+        String(r.PIDetailID) === detailId && isTrueOrBlank_(r.Active)
+      );
+
+      const oldDetailSnapshot = existingDetail ? compactJson_(existingDetail) : '';
+
+      const detail = {
+        PIDetailID: detailId,
+        PIReportID: reportId,
+        PeriodNumber: periodNumber,
+        Lesson: item.lesson ?? item.Lesson ?? '',
+        Classwork: item.classwork ?? item.Classwork ?? '',
+        PerformanceTask: item.performanceTask ?? item.PerformanceTask ?? '',
+        Objectives: item.objectives ?? item.Objectives ?? '',
+        LastUpdatedAt: nowIso_(),
+        LastUpdatedBy: user.employee.EmployeeID,
+        Active: true
+      };
+
+      if (existingDetail) {
+        updateObjectRow_(
+          detailSh,
+          HEADERS[SHEETS.PI_DETAILS],
+          existingDetail._row,
+          detail
+        );
+        Object.assign(existingDetail, detail);
+      } else {
+        appendObjectRow_(detailSh, HEADERS[SHEETS.PI_DETAILS], detail);
+        detailRows.push({ ...detail, _row: detailSh.getLastRow() });
+      }
+
+      results.push({
+        PIReportID: reportId,
+        PIDetailID: detailId,
+        PeriodNumber: periodNumber,
+        Status: report.Status || 'Draft',
+        ApplicableSectionsMode: sectionSelection.mode,
+        ApplicableSections: sectionSelection.sections
+      });
+
+      audit_({
+        actionType: existingDetail ? 'UPDATE' : 'CREATE',
+        module: 'PerformanceIndicatorDetails',
+        recordId: detailId,
+        description: `PI period ${periodNumber} ${existingDetail ? 'updated' : 'created'} for ${assignment.GradeID} / ${assignment.SubjectID}.`,
+        oldValue: oldDetailSnapshot,
+        newValue: compactJson_(detail),
+        success: true,
+        user
+      });
+    });
+
+    SpreadsheetApp.flush();
+    return results;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function submitPI_(body) {
+  const user = requireCurrentEmployee_();
+  const reportId = String(body.reportId || body.PIReportID || '').trim();
+  if (!reportId) throw new Error('PIReportID is required.');
+
+  const reportSh = getOperationalSS_().getSheetByName(SHEETS.PI);
+  const report = sheetToObjects_(reportSh).find(r =>
+    String(r.PIReportID) === reportId && isTrueOrBlank_(r.Active)
+  );
+
+  if (!report) throw new Error('PI report was not found.');
+
+  if (!canTeacherEditPi_(user.employee.EmployeeID, report) &&
+      !isFullAdmin_(user.employee.EmployeeID)) {
+    throw new Error('You are not authorized to submit this PI.');
+  }
+
+  const details = getPiDetails_(reportId);
+  if (!details.length) {
+    throw new Error('The PI has no period details. Save the PI content before submitting.');
+  }
+
+  const oldStatus = String(report.Status || 'Draft');
+  if (oldStatus === 'Approved') {
+    throw new Error('This PI is already approved.');
+  }
+  if (['Submitted', 'Resubmitted', 'Under Review'].includes(oldStatus)) {
+    throw new Error(`This PI is already ${oldStatus}.`);
+  }
+
+  const isResubmission = oldStatus === 'Returned';
+  const version = isResubmission
+    ? (Number(report.Version) || 1) + 1
+    : (Number(report.Version) || 1);
+
+  const nextStatus = isResubmission ? 'Resubmitted' : 'Submitted';
+  const now = nowIso_();
+
+  updateObjectRow_(reportSh, HEADERS[SHEETS.PI], report._row, {
+    Status: nextStatus,
+    SubmittedDateTime: now,
+    ReviewComment: '',
+    Version: version
+  });
+
+  addWorkflow_({
+    reportType: 'PI',
+    reportId,
+    employeeId: report.EmployeeID,
+    action: isResubmission ? 'RESUBMIT' : 'SUBMIT',
+    fromStatus: oldStatus,
+    toStatus: nextStatus,
+    comment: body.comment || '',
+    version,
+    user
+  });
+
+  audit_({
+    actionType: isResubmission ? 'RESUBMIT' : 'SUBMIT',
+    module: 'PerformanceIndicator',
+    recordId: reportId,
+    description: `PI ${isResubmission ? 'resubmitted' : 'submitted'} for academic review.`,
+    oldValue: oldStatus,
+    newValue: nextStatus,
+    success: true,
+    user
+  });
+
+  return {
+    reportId,
+    status: nextStatus,
+    version,
+    detailCount: details.length
+  };
+}
+
+function canTeacherEditPi_(employeeId, report) {
+  return getActiveTeacherAssignments_(employeeId).some(a =>
+    String(a.GradeID) === String(report.GradeID) &&
+    String(a.SubjectID) === String(report.SubjectID) &&
+    isTrue_(a.CanEditPI)
+  );
+}
+
+function getPiDetails_(reportId) {
+  const sh = getOperationalSS_().getSheetByName(SHEETS.PI_DETAILS);
+  if (!sh) return [];
+
+  return sheetToObjects_(sh)
+    .filter(r =>
+      String(r.PIReportID) === String(reportId) &&
+      isTrueOrBlank_(r.Active)
+    )
+    .sort((a, b) => Number(a.PeriodNumber) - Number(b.PeriodNumber));
+}
+
+function getPiDetailsAuthorized_(reportId) {
+  const user = requireCurrentEmployee_();
+  const rows = getReportRows_('PI', reportId);
+
+  if (!rows.length) throw new Error('PI report was not found.');
+  if (!canViewReport_(user, rows[0])) {
+    throw new Error('You do not have permission to view this PI.');
+  }
+
+  return getPiDetails_(reportId).map(stripInternalFields_);
+}
+
+function getPiSectionsForGrade_(gradeId) {
+  const user = requireCurrentEmployee_();
+  const gid = String(gradeId || '').trim();
+  if (!gid) throw new Error('GradeID is required.');
+
+  const roles = getUserRoles_(user.employee.EmployeeID, user.employee.JobTitle);
+  const elevated = roles.some(r =>
+    ['Supervisor','Principal','GeneralAcademicManager','SystemAdmin','ReportPersonnel'].includes(r)
+  );
+
+  const teacherHasGrade = getActiveTeacherAssignments_(user.employee.EmployeeID)
+    .some(a => String(a.GradeID) === gid);
+
+  if (!elevated && !teacherHasGrade) {
+    throw new Error('You do not have access to this grade.');
+  }
+
+  return getActiveSectionsForGrade_(gid)
+    .map(stripInternalFields_);
+}
+
+function makePiDetailId_(reportId, periodNumber) {
+  return sanitizeId_(`PID_${reportId}_P${periodNumber}`);
+}
+
+function normalizePiSectionSelection_(gradeId, modeInput, sectionsInput) {
+  const mode = String(modeInput || 'ALL').trim().toUpperCase();
+
+  if (!['ALL', 'SELECTED'].includes(mode)) {
+    throw new Error('ApplicableSectionsMode must be ALL or SELECTED.');
+  }
+
+  if (mode === 'ALL') {
+    return { mode: 'ALL', sections: '' };
+  }
+
+  const requested = Array.isArray(sectionsInput)
+    ? sectionsInput.map(String)
+    : String(sectionsInput || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+
+  if (!requested.length) {
+    throw new Error('Select at least one section when ApplicableSectionsMode is SELECTED.');
+  }
+
+  const validSections = getActiveSectionsForGrade_(gradeId);
+  const validIds = new Set(validSections.map(s => String(s.SectionID)));
+  const invalid = requested.filter(id => !validIds.has(String(id)));
+
+  if (invalid.length) {
+    throw new Error(`These sections are not active sections of ${gradeId}: ${invalid.join(', ')}`);
+  }
+
+  return {
+    mode: 'SELECTED',
+    sections: [...new Set(requested.map(String))].join(',')
+  };
+}
+
+function getActiveSectionsForGrade_(gradeId) {
+  return readMasterTable_('Sections').filter(r =>
+    String(r.GradeID) === String(gradeId) &&
+    (r.Active === '' || isTrue_(r.Active))
+  );
+}
+
+function getPiApplicableSections_(report) {
+  const mode = String(report.ApplicableSectionsMode || 'ALL').toUpperCase();
+
+  if (mode === 'ALL') {
+    return getActiveSectionsForGrade_(report.GradeID);
+  }
+
+  const ids = String(report.ApplicableSections || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  const wanted = new Set(ids);
+  return getActiveSectionsForGrade_(report.GradeID)
+    .filter(s => wanted.has(String(s.SectionID)));
+}
+
+// -----------------------------------------------------------------------------
+// 6. DAILY REPORTS - TIMETABLE DRIVEN
+// -----------------------------------------------------------------------------
+
+/**
+ * Returns only the timetable lessons the signed-in teacher is responsible for
+ * on the requested date. Grade/section/subject/period are derived from the
+ * active timetable; the teacher does not choose them manually.
+ */
+function getMyDailySchedule_(dateInput) {
+  const user = requireCurrentEmployee_();
+  const date = normalizeDate_(dateInput || new Date());
+  const dayOfWeek = dayOfWeekForDate_(date);
+  const context = buildTimetableImportContext_(date);
+  const dailyRows = sheetToObjects_(getOperationalSS_().getSheetByName(SHEETS.DAILY));
+  const employeeId = String(user.employee.EmployeeID);
+  const result = [];
+
+  const sections = context.sections.filter(s =>
+    (s.Active === '' || isTrue_(s.Active))
+  );
+
+  sections.forEach(section => {
+    const version = resolveTimetableVersionForSection_(section, date, context);
+    if (!version) return;
+
+    context.timetableEntries
+      .filter(entry =>
+        String(entry.TimetableVersionID) === String(version.TimetableVersionID) &&
+        String(entry.SectionID) === String(section.SectionID) &&
+        String(entry.DayOfWeek || '').toLowerCase() === dayOfWeek.toLowerCase() &&
+        isTrueOrBlank_(entry.Active) &&
+        isTrue_(entry.DailyReportRequired) &&
+        timetableEntryAssignedToEmployee_(entry, employeeId)
+      )
+      .forEach(entry => {
+        const assignment = findDailyAssignmentForTimetableEntry_(entry, employeeId);
+        // A timetable lesson is visible even if assignment mapping is incomplete,
+        // but it will be marked cannotEdit until the assignment is fixed.
+        const reportId = makeDailyReportId_(
+          CONFIG.ACADEMIC_YEAR_ID,
+          date,
+          entry.SectionID,
+          entry.PeriodNumber,
+          entry.SubjectID
+        );
+        const existing = dailyRows.find(r =>
+          String(r.DailyReportID) === reportId && isTrueOrBlank_(r.Active)
+        );
+        const subject = context.subjects.find(x => String(x.SubjectID) === String(entry.SubjectID)) || {};
+
+        result.push({
+          date,
+          dayOfWeek,
+          TimetableVersionID: version.TimetableVersionID,
+          TimetableEntryID: entry.TimetableEntryID,
+          AssignmentID: assignment ? assignment.AssignmentID : '',
+          GradeID: entry.GradeID || section.GradeID,
+          SectionID: entry.SectionID,
+          SubjectID: entry.SubjectID,
+          SubjectNameEN: subject.SubjectNameEN || subject.SubjectName || entry.SubjectID,
+          SubjectNameAR: subject.SubjectNameAR || '',
+          PeriodNumber: Number(entry.PeriodNumber) || 0,
+          StartTime: entry.StartTime || '',
+          EndTime: entry.EndTime || '',
+          canEdit: !!assignment && (isTrue_(assignment.CanEditDailyReport) || isFullAdmin_(employeeId)),
+          DailyReportID: existing ? existing.DailyReportID : reportId,
+          Status: existing ? (existing.Status || 'Draft') : 'Not Started',
+          WhatWeLearnedToday: existing ? (existing.WhatWeLearnedToday || '') : '',
+          PerformanceTask: existing ? (existing.PerformanceTask || '') : '',
+          PracticeForMastery: existing ? (existing.PracticeForMastery || '') : '',
+          ReviewComment: existing ? (existing.ReviewComment || '') : '',
+          Version: existing ? (Number(existing.Version) || 1) : 1
+        });
+      });
+  });
+
+  result.sort((a,b) =>
+    String(a.GradeID).localeCompare(String(b.GradeID), undefined, {numeric:true}) ||
+    String(a.SectionID).localeCompare(String(b.SectionID), undefined, {numeric:true}) ||
+    Number(a.PeriodNumber) - Number(b.PeriodNumber)
+  );
+
+  return {
+    date,
+    dayOfWeek,
+    employeeId,
+    employeeNameEN: user.employee.EmployeeNameEN || '',
+    entries: result,
+    count: result.length
+  };
+}
+
+/**
+ * Same teacher schedule plus the current report values. Kept as a separate
+ * endpoint for the website because later it can include section-day summaries.
+ */
+function getDailyReportForDate_(dateInput) {
+  return getMyDailySchedule_(dateInput);
+}
+
+/**
+ * Creates Draft records for today's required timetable lessons assigned to the
+ * signed-in teacher. Existing records are returned unchanged.
+ */
+function createOrLoadDailyReportFromTimetable_(body) {
+  const date = normalizeDate_((body && (body.date || body.Date)) || new Date());
+  const schedule = getMyDailySchedule_(date);
+  const created = [];
+
+  schedule.entries.forEach(entry => {
+    if (!entry.canEdit || entry.Status !== 'Not Started') return;
+    const result = saveDailyBatch_({
+      items: [{
+        timetableEntryId: entry.TimetableEntryID,
+        whatWeLearnedToday: '',
+        performanceTask: '',
+        practiceForMastery: ''
+      }],
+      date
+    });
+    created.push(result[0]);
+  });
+
+  return {
+    date,
+    createdCount: created.length,
+    created,
+    schedule: getMyDailySchedule_(date)
+  };
+}
+
+function saveDailyBatch_(body) {
+  const user = requireCurrentEmployee_();
+  const items = Array.isArray(body.items) ? body.items : [body.item || body];
+  if (!items.length) throw new Error('No Daily Report entries supplied.');
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(CONFIG.LOCK_TIMEOUT_MS);
+
+  try {
+    const sh = getOperationalSS_().getSheetByName(SHEETS.DAILY);
+    const headers = HEADERS[SHEETS.DAILY];
+    const existingRows = sheetToObjects_(sh);
+    const now = nowIso_();
+    const results = [];
+
+    items.forEach(item => {
+      const timetableEntryId = String(item.timetableEntryId || item.TimetableEntryID || '').trim();
+      if (!timetableEntryId) {
+        throw new Error('TimetableEntryID is required. Daily Reports must be created from the active timetable.');
+      }
+
+      const entry = getTimetableEntryById_(timetableEntryId);
+      if (!entry) throw new Error(`Active timetable entry "${timetableEntryId}" was not found.`);
+
+      const date = normalizeDate_(item.date || item.Date || body.date || body.Date || new Date());
+      validateTimetableEntryEffectiveForDate_(entry, date);
+
+      const employeeId = String(user.employee.EmployeeID);
+      if (!timetableEntryAssignedToEmployee_(entry, employeeId) && !isFullAdmin_(employeeId)) {
+        throw new Error('You are not assigned to this timetable lesson.');
+      }
+
+      const assignment = findDailyAssignmentForTimetableEntry_(entry, employeeId);
+      if (!assignment && !isFullAdmin_(employeeId)) {
+        throw new Error(`No active TeacherAssignment permits Daily Report editing for ${entry.SectionID}/${entry.SubjectID}.`);
+      }
+      if (assignment && !isTrue_(assignment.CanEditDailyReport) && !isFullAdmin_(employeeId)) {
+        throw new Error('This assignment does not allow Daily Report editing.');
+      }
+
+      const calendar = resolveAcademicCalendarForDate_(date);
+      const reportId = makeDailyReportId_(
+        CONFIG.ACADEMIC_YEAR_ID,
+        date,
+        entry.SectionID,
+        entry.PeriodNumber,
+        entry.SubjectID
+      );
+      const existing = existingRows.find(r =>
+        String(r.DailyReportID) === reportId && isTrueOrBlank_(r.Active)
+      );
+
+      if (existing && ['Submitted','Under Review','Approved'].includes(String(existing.Status))) {
+        throw new Error(`This Daily Report is currently ${existing.Status} and cannot be edited.`);
+      }
+
+      const section = getSectionById_(entry.SectionID) || {};
+      const record = {
+        DailyReportID: reportId,
+        AcademicYearID: CONFIG.ACADEMIC_YEAR_ID,
+        SemesterID: calendar.semesterId,
+        Date: date,
+        WeekID: calendar.weekId,
+        AssignmentID: assignment ? assignment.AssignmentID : '',
+        EmployeeID: employeeId,
+        GradeID: entry.GradeID || section.GradeID || (assignment ? assignment.GradeID : ''),
+        SectionID: entry.SectionID,
+        SubjectID: entry.SubjectID,
+        PeriodNumber: Number(entry.PeriodNumber),
+        TimetableEntryID: entry.TimetableEntryID,
+        WhatWeLearnedToday: item.whatWeLearnedToday ?? item.WhatWeLearnedToday ?? '',
+        PerformanceTask: item.performanceTask ?? item.PerformanceTask ?? '',
+        PracticeForMastery: item.practiceForMastery ?? item.PracticeForMastery ?? '',
+        Status: existing ? (existing.Status || 'Draft') : 'Draft',
+        SubmittedDateTime: existing ? (existing.SubmittedDateTime || '') : '',
+        ReviewedBy: existing ? (existing.ReviewedBy || '') : '',
+        ReviewedDateTime: existing ? (existing.ReviewedDateTime || '') : '',
+        ReviewComment: existing ? (existing.ReviewComment || '') : '',
+        Version: existing ? (Number(existing.Version) || 1) : 1,
+        Active: true,
+        CreatedDateTime: existing ? (existing.CreatedDateTime || now) : now,
+        UpdatedDateTime: now
+      };
+
+      if (existing) {
+        updateObjectRow_(sh, headers, existing._row, record);
+      } else {
+        appendObjectRow_(sh, headers, record);
+        existingRows.push({ ...record, _row: sh.getLastRow() });
+      }
+
+      results.push({
+        DailyReportID: reportId,
+        TimetableEntryID: entry.TimetableEntryID,
+        GradeID: record.GradeID,
+        SectionID: record.SectionID,
+        SubjectID: record.SubjectID,
+        PeriodNumber: record.PeriodNumber,
+        Status: record.Status
+      });
+
+      audit_({
+        actionType: existing ? 'UPDATE' : 'CREATE',
+        module: 'DailyReport',
+        recordId: reportId,
+        description: `Timetable-driven Daily Report ${existing ? 'updated' : 'created'} for ${record.SectionID}, Period ${record.PeriodNumber}.`,
+        oldValue: existing ? compactJson_(existing) : '',
+        newValue: compactJson_(record),
+        success: true,
+        user
+      });
+    });
+
+    SpreadsheetApp.flush();
+    return results;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function submitDaily_(body) {
+  const user = requireCurrentEmployee_();
+  const reportId = String(body.reportId || body.DailyReportID || '').trim();
+  if (!reportId) throw new Error('DailyReportID is required.');
+
+  const sh = getOperationalSS_().getSheetByName(SHEETS.DAILY);
+  const row = sheetToObjects_(sh)
+    .find(r => String(r.DailyReportID) === reportId && isTrueOrBlank_(r.Active));
+  if (!row) throw new Error('Daily Report was not found.');
+
+  const entry = row.TimetableEntryID ? getTimetableEntryById_(row.TimetableEntryID) : null;
+  const employeeId = String(user.employee.EmployeeID);
+  const authorizedByTimetable = entry && timetableEntryAssignedToEmployee_(entry, employeeId);
+  const assignment = row.AssignmentID ? safeGetAssignmentById_(row.AssignmentID) : null;
+  const authorizedByAssignment = assignment && String(assignment.EmployeeID) === employeeId;
+
+  if (!authorizedByTimetable && !authorizedByAssignment && !isFullAdmin_(employeeId)) {
+    throw new Error('You are not authorized to submit this Daily Report.');
+  }
+
+  validateDailyContentForSubmission_(row);
+
+  const oldStatus = row.Status || 'Draft';
+  const version = oldStatus === 'Returned'
+    ? (Number(row.Version) || 1) + 1
+    : (Number(row.Version) || 1);
+  const now = nowIso_();
+
+  updateObjectRow_(sh, HEADERS[SHEETS.DAILY], row._row, {
+    Status: 'Submitted',
+    SubmittedDateTime: now,
+    ReviewComment: '',
+    Version: version,
+    UpdatedDateTime: now
+  });
+
+  addWorkflow_({
+    reportType: 'DAILY', reportId, employeeId: row.EmployeeID,
+    action: oldStatus === 'Returned' ? 'RESUBMIT' : 'SUBMIT',
+    fromStatus: oldStatus, toStatus: 'Submitted', comment: body.comment || '',
+    version, user
+  });
+
+  audit_({
+    actionType: oldStatus === 'Returned' ? 'RESUBMIT' : 'SUBMIT',
+    module: 'DailyReport', recordId: reportId,
+    description: 'Daily Report submitted for academic review.',
+    oldValue: oldStatus, newValue: 'Submitted', success: true, user
+  });
+
+  return { reportId, status: 'Submitted', version };
+}
+
+function getSectionDailyCompletion_(dateInput, sectionId) {
+  const user = requireCurrentEmployee_();
+  const date = normalizeDate_(dateInput || new Date());
+  const section = getSectionById_(sectionId);
+  if (!section) throw new Error(`Section "${sectionId}" was not found.`);
+
+  // Any teacher assigned to the section, scoped supervisor/principal, or admin can view.
+  if (!canViewSectionDaily_(user, section)) throw new Error('You do not have permission to view this section.');
+
+  return buildSectionDailyCompletion_(date, section);
+}
+
+function buildSectionDailyCompletion_(date, section) {
+  const context = buildTimetableImportContext_(date);
+  const version = resolveTimetableVersionForSection_(section, date, context);
+  const dayOfWeek = dayOfWeekForDate_(date);
+  const operationalRows = sheetToObjects_(getOperationalSS_().getSheetByName(SHEETS.DAILY));
+
+  if (!version) {
+    return {
+      date, sectionId: section.SectionID, gradeId: section.GradeID,
+      timetableVersionId: '', required: 0, completed: 0, submitted: 0,
+      missing: 0, completionPercent: 0, entries: []
+    };
+  }
+
+  const expected = context.timetableEntries.filter(entry =>
+    String(entry.TimetableVersionID) === String(version.TimetableVersionID) &&
+    String(entry.SectionID) === String(section.SectionID) &&
+    String(entry.DayOfWeek || '').toLowerCase() === dayOfWeek.toLowerCase() &&
+    isTrueOrBlank_(entry.Active) && isTrue_(entry.DailyReportRequired)
+  );
+
+  const entries = expected.map(entry => {
+    const reportId = makeDailyReportId_(CONFIG.ACADEMIC_YEAR_ID, date, entry.SectionID, entry.PeriodNumber, entry.SubjectID);
+    const report = operationalRows.find(r => String(r.DailyReportID) === reportId && isTrueOrBlank_(r.Active));
+    const contentComplete = report ? isDailyContentComplete_(report) : false;
+    return {
+      TimetableEntryID: entry.TimetableEntryID,
+      PeriodNumber: Number(entry.PeriodNumber),
+      SubjectID: entry.SubjectID,
+      EmployeeID: entry.EmployeeID || '',
+      AdditionalEmployeeIDs: entry.AdditionalEmployeeIDs || '',
+      DailyReportID: report ? report.DailyReportID : '',
+      Status: report ? (report.Status || 'Draft') : 'Not Started',
+      contentComplete,
+      missingFields: report ? dailyMissingFields_(report) : ['WhatWeLearnedToday','PerformanceTask','PracticeForMastery']
+    };
+  }).sort((a,b) => a.PeriodNumber-b.PeriodNumber);
+
+  const completed = entries.filter(x => x.contentComplete).length;
+  const submitted = entries.filter(x => ['Submitted','Under Review','Approved'].includes(x.Status)).length;
+  const required = entries.length;
+  return {
+    date,
+    dayOfWeek,
+    sectionId: section.SectionID,
+    gradeId: section.GradeID,
+    timetableVersionId: version.TimetableVersionID,
+    required,
+    completed,
+    submitted,
+    missing: required - completed,
+    completionPercent: required ? Math.round((completed / required) * 100) : 100,
+    readyForReview: required > 0 && completed === required,
+    entries
+  };
+}
+
+function getDailyReportMonitoring_(paramsInput) {
+  const user = requireCurrentEmployee_();
+  const params = (paramsInput && typeof paramsInput === 'object') ? paramsInput : { date: paramsInput };
+  const date = normalizeDate_(params.date || params.Date || new Date());
+  const roles = getUserRoles_(user.employee.EmployeeID, user.employee.JobTitle);
+
+  if (!roles.some(r => ['Supervisor','Principal','GeneralAcademicManager','SystemAdmin'].includes(r))) {
+    throw new Error('You do not have Daily Report monitoring access.');
+  }
+
+  const gradeFilter = String(params.gradeId || params.GradeID || '').trim();
+  const sectionFilter = String(params.sectionId || params.SectionID || '').trim();
+  const subjectFilter = String(params.subjectId || params.SubjectID || '').trim();
+  const teacherFilter = String(params.employeeId || params.EmployeeID || '').trim();
+  const statusFilter = String(params.status || params.Status || '').trim().toLowerCase();
+
+  const subjects = readMasterTable_('Subjects');
+  const employees = readMasterTable_('Employees');
+  const subjectById = Object.fromEntries(subjects.map(x => [String(x.SubjectID), x]));
+  const employeeById = Object.fromEntries(employees.map(x => [String(x.EmployeeID), x]));
+
+  let sections = readMasterTable_('Sections').filter(s =>
+    (s.Active === '' || isTrue_(s.Active)) && canViewSectionDaily_(user, s)
+  );
+
+  if (gradeFilter) sections = sections.filter(s => String(s.GradeID) === gradeFilter);
+  if (sectionFilter) sections = sections.filter(s => String(s.SectionID) === sectionFilter);
+
+  const monitoringRows = [];
+
+  sections.forEach(section => {
+    const completion = buildSectionDailyCompletion_(date, section);
+
+    completion.entries.forEach(entry => {
+      // Supervisors must be scoped to the actual subject, not merely the section.
+      if (roles.includes('Supervisor') && !roles.includes('SystemAdmin') && !roles.includes('GeneralAcademicManager')) {
+        const scopedReport = {
+          GradeID: section.GradeID,
+          SectionID: section.SectionID,
+          SubjectID: entry.SubjectID
+        };
+        if (!canSupervisorActOnReport_(user.employee.EmployeeID, scopedReport) &&
+            !roles.includes('Principal')) return;
+      }
+
+      if (subjectFilter && String(entry.SubjectID) !== subjectFilter) return;
+
+      const teacherIds = [String(entry.EmployeeID || '').trim()]
+        .concat(String(entry.AdditionalEmployeeIDs || '').split(',').map(x => x.trim()))
+        .filter(Boolean);
+
+      if (teacherFilter && !teacherIds.includes(teacherFilter)) return;
+
+      const subject = subjectById[String(entry.SubjectID)] || {};
+      const primaryEmployee = employeeById[String(entry.EmployeeID)] || {};
+      const additionalNames = teacherIds.slice(1).map(id => {
+        const emp = employeeById[id] || {};
+        return emp.EmployeeNameEN || emp.EmployeeNameAR || id;
+      });
+
+      const rawStatus = String(entry.Status || 'Not Started');
+      const normalizedStatus = rawStatus.toLowerCase();
+      if (statusFilter && normalizedStatus !== statusFilter) return;
+
+      monitoringRows.push({
+        Date: date,
+        DayOfWeek: completion.dayOfWeek || dayOfWeekForDate_(date),
+        TimetableVersionID: completion.timetableVersionId || '',
+        GradeID: section.GradeID || '',
+        SectionID: section.SectionID || '',
+        SectionName: section.SectionNameEN || section.SectionName || section.SectionCode || section.SectionID || '',
+        Gender: section.Gender || '',
+        Program: section.Program || '',
+        PeriodNumber: Number(entry.PeriodNumber) || 0,
+        TimetableEntryID: entry.TimetableEntryID || '',
+        SubjectID: entry.SubjectID || '',
+        SubjectNameEN: subject.SubjectNameEN || entry.SubjectID || '',
+        SubjectNameAR: subject.SubjectNameAR || '',
+        EmployeeID: entry.EmployeeID || '',
+        EmployeeNameEN: primaryEmployee.EmployeeNameEN || primaryEmployee.EmployeeName || entry.EmployeeID || '',
+        EmployeeNameAR: primaryEmployee.EmployeeNameAR || '',
+        AdditionalEmployeeIDs: entry.AdditionalEmployeeIDs || '',
+        AdditionalEmployeeNames: additionalNames.join(', '),
+        DailyReportID: entry.DailyReportID || '',
+        Status: rawStatus,
+        ContentComplete: !!entry.contentComplete,
+        MissingFields: entry.missingFields || [],
+        RequiresAction: rawStatus === 'Not Started' || rawStatus === 'Draft' || rawStatus === 'Returned' || !entry.contentComplete,
+        AwaitingReview: ['Submitted','Under Review','Resubmitted'].includes(rawStatus),
+        Approved: rawStatus === 'Approved'
+      });
+    });
+  });
+
+  monitoringRows.sort((a,b) => {
+    const gA = getGradeSortOrder_(a.GradeID), gB = getGradeSortOrder_(b.GradeID);
+    const gradeCompare = (gA ?? 999) - (gB ?? 999);
+    if (gradeCompare) return gradeCompare;
+    const sectionCompare = String(a.SectionID).localeCompare(String(b.SectionID));
+    if (sectionCompare) return sectionCompare;
+    return a.PeriodNumber - b.PeriodNumber;
+  });
+
+  const countStatus = status => monitoringRows.filter(r => r.Status === status).length;
+  const expected = monitoringRows.length;
+  const contentComplete = monitoringRows.filter(r => r.ContentComplete).length;
+  const approved = countStatus('Approved');
+  const submitted = countStatus('Submitted');
+  const underReview = countStatus('Under Review');
+  const resubmitted = countStatus('Resubmitted');
+  const returned = countStatus('Returned');
+  const draft = countStatus('Draft');
+  const notStarted = countStatus('Not Started');
+  const awaitingReview = submitted + underReview + resubmitted;
+  const requiringAction = monitoringRows.filter(r => r.RequiresAction).length;
+
+  const sectionGroups = {};
+  monitoringRows.forEach(r => {
+    const key = `${r.GradeID}|${r.SectionID}`;
+    if (!sectionGroups[key]) {
+      sectionGroups[key] = {
+        GradeID: r.GradeID,
+        SectionID: r.SectionID,
+        SectionName: r.SectionName,
+        Expected: 0,
+        ContentComplete: 0,
+        Approved: 0,
+        MissingOrDraft: 0,
+        AwaitingReview: 0
+      };
+    }
+    const g = sectionGroups[key];
+    g.Expected++;
+    if (r.ContentComplete) g.ContentComplete++;
+    if (r.Approved) g.Approved++;
+    if (r.RequiresAction) g.MissingOrDraft++;
+    if (r.AwaitingReview) g.AwaitingReview++;
+  });
+
+  const sectionSummaries = Object.values(sectionGroups).map(g => ({
+    ...g,
+    CompletionPercent: g.Expected ? Math.round((g.ContentComplete / g.Expected) * 100) : 100,
+    FullyApproved: g.Expected > 0 && g.Approved === g.Expected
   }));
-  try{
-    const r=await apiPost({action:'savePIBatch',items});
-    CURRENT_PI_REPORT_ID=r?.[0]?.PIReportID||'';
-    setMessage(`PI draft saved. ${r.length} period row(s) updated.`);
-  }catch(e){setMessage(e.message,'error')}
-}
-async function submitCurrentPi(){
-  if(!CURRENT_PI_REPORT_ID){await saveAllPi();if(!CURRENT_PI_REPORT_ID)return}
-  try{const r=await apiPost({action:'submitPI',reportId:CURRENT_PI_REPORT_ID});setMessage(`PI submitted successfully. Status: ${r.status}`)}catch(e){setMessage(e.message,'error')}
-}
-async function loadPiMonitoring(){
-  try{
-    const q=await apiGet('reviewQueue',{reportType:'PI',gradeId:document.getElementById('pimonGrade').value,weekId:document.getElementById('pimonWeek').value,status:document.getElementById('pimonStatus').value});
-    renderReviewRows(q,'piMonitoringResult',false);
-  }catch(e){document.getElementById('piMonitoringResult').innerHTML=`<div class="notice error">${esc(e.message)}</div>`}
+
+  return {
+    date,
+    filters: {
+      gradeId: gradeFilter,
+      sectionId: sectionFilter,
+      subjectId: subjectFilter,
+      employeeId: teacherFilter,
+      status: params.status || params.Status || ''
+    },
+    summary: {
+      ExpectedReports: expected,
+      ContentComplete: contentComplete,
+      NotStarted: notStarted,
+      Draft: draft,
+      Submitted: submitted,
+      UnderReview: underReview,
+      Resubmitted: resubmitted,
+      AwaitingReview: awaitingReview,
+      Returned: returned,
+      Approved: approved,
+      RequiringAction: requiringAction,
+      CompletionPercent: expected ? Math.round((contentComplete / expected) * 100) : 100,
+      ApprovalPercent: expected ? Math.round((approved / expected) * 100) : 100,
+      SectionsMonitored: sectionSummaries.length,
+      FullyApprovedSections: sectionSummaries.filter(x => x.FullyApproved).length
+    },
+    sectionSummaries,
+    rows: monitoringRows
+  };
 }
 
-async function loadDailySchedule(){
-  const date=document.getElementById('dailyDate').value||today();
-  try{
-    const d=await apiGet('myDailySchedule',{date});
-    document.getElementById('dailySchedule').innerHTML=d.entries.length?d.entries.map(renderDailyCard).join(''):`<div class="notice">No Daily Report timetable lessons were found for ${esc(date)}.</div>`;
-  }catch(e){document.getElementById('dailySchedule').innerHTML=`<div class="notice error">${esc(e.message)}</div>`}
-}
-function renderDailyCard(e){
-  const locked=!e.canEdit||['Submitted','Under Review','Approved'].includes(e.Status);
-  return `<div class="period-card" data-daily-entry="${esc(e.TimetableEntryID)}" data-report-id="${esc(e.DailyReportID)}">
-    <div class="period-title"><div><strong>Period ${esc(e.PeriodNumber)} — ${esc(e.SubjectNameEN||e.SubjectID)}</strong><div class="small">${esc(e.GradeID)} · ${esc(e.SectionID)} · ${esc(e.StartTime)}-${esc(e.EndTime)}</div></div>${statusBadge(e.Status)}</div>
-    ${e.ReviewComment?`<div class="notice error"><strong>Review Comment:</strong> ${esc(e.ReviewComment)}</div>`:''}
-    <div class="grid3">
-      <div><label>What We Learned Today</label><textarea data-field="learned" ${locked?'disabled':''}>${esc(e.WhatWeLearnedToday)}</textarea></div>
-      <div><label>Performance Task</label><textarea data-field="task" ${locked?'disabled':''}>${esc(e.PerformanceTask)}</textarea></div>
-      <div><label>Practice for Mastery</label><textarea data-field="practice" ${locked?'disabled':''}>${esc(e.PracticeForMastery)}</textarea></div>
-    </div>
-    <div class="actions">${!locked?`<button class="btn primary" onclick="saveDailyEntry(this)">Save Draft</button><button class="btn success" onclick="submitDailyEntry(this)">Submit</button>`:''}</div>
-  </div>`;
-}
-async function saveDailyEntry(btn){
-  const card=btn.closest('[data-daily-entry]'),date=document.getElementById('dailyDate').value;
-  try{
-    const r=await apiPost({action:'saveDailyReport',timetableEntryId:card.dataset.dailyEntry,date,
-      whatWeLearnedToday:card.querySelector('[data-field="learned"]').value,
-      performanceTask:card.querySelector('[data-field="task"]').value,
-      practiceForMastery:card.querySelector('[data-field="practice"]').value});
-    card.dataset.reportId=r[0]?.DailyReportID||card.dataset.reportId;setMessage('Daily Report draft saved.');
-  }catch(e){setMessage(e.message,'error')}
-}
-async function submitDailyEntry(btn){
-  await saveDailyEntry(btn);
-  const card=btn.closest('[data-daily-entry]');
-  try{const r=await apiPost({action:'submitDailyReport',reportId:card.dataset.reportId});setMessage(`Daily Report submitted. Status: ${r.status}`);loadDailySchedule()}catch(e){setMessage(e.message,'error')}
+function getTimetableEntryById_(timetableEntryId) {
+  return readMasterTable_('TimetableEntries').find(r =>
+    String(r.TimetableEntryID) === String(timetableEntryId) && isTrueOrBlank_(r.Active)
+  ) || null;
 }
 
-async function loadDailyMonitoring(){
-  try{
-    const d=await apiGet('dailyMonitoring',{date:document.getElementById('monDate').value||today(),gradeId:document.getElementById('monGrade').value,sectionId:document.getElementById('monSection').value,status:document.getElementById('monStatus').value});
-    const summary=d.summary||d.counts||{};
-    document.getElementById('monitoringStats').innerHTML=`<div class="grid4">${Object.entries(summary).slice(0,8).map(([k,v])=>`<div class="stat"><div class="num">${esc(v)}</div><div class="label">${esc(k)}</div></div>`).join('')}</div>`;
-    const rows=d.rows||d.entries||[];
-    document.getElementById('monitoringTable').innerHTML=rows.length?`<div class="table-wrap"><table><thead><tr><th>Grade</th><th>Section</th><th>Period</th><th>Subject</th><th>Teacher</th><th>Status</th><th>Missing</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.GradeID)}</td><td>${esc(r.SectionID)}</td><td>${esc(r.PeriodNumber)}</td><td>${esc(r.SubjectNameEN||r.SubjectID)}</td><td>${esc(r.EmployeeNameEN||r.EmployeeID)}</td><td>${statusBadge(r.Status)}</td><td>${esc(Array.isArray(r.MissingFields)?r.MissingFields.join(', '):r.MissingFields||'')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="notice">No monitoring rows found.</div>';
-  }catch(e){setMessage(e.message,'error')}
+function timetableEntryAssignedToEmployee_(entry, employeeId) {
+  const id = String(employeeId || '').trim();
+  if (!id) return false;
+  if (String(entry.EmployeeID || '').trim() === id) return true;
+  const additional = String(entry.AdditionalEmployeeIDs || '')
+    .split(',').map(x => x.trim()).filter(Boolean);
+  return additional.includes(id);
 }
 
-async function loadReviewQueue(){
-  try{
-    const q=await apiGet('reviewQueue',{reportType:document.getElementById('reviewType').value,status:document.getElementById('reviewStatus').value,gradeId:document.getElementById('reviewGrade').value,subjectId:document.getElementById('reviewSubject').value});
-    renderReviewRows(q,'reviewTable',true);
-    document.getElementById('reviewStats').innerHTML=`<div class="grid4">${Object.entries(q.counts||{}).slice(0,8).map(([k,v])=>`<div class="stat"><div class="num">${esc(v)}</div><div class="label">${esc(k)}</div></div>`).join('')}</div>`;
-  }catch(e){setMessage(e.message,'error')}
-}
-function renderReviewRows(q,target,actions){
-  const rows=q.rows||[];
-  document.getElementById(target).innerHTML=rows.length?`<div class="table-wrap"><table><thead><tr><th>Type</th><th>Teacher</th><th>Grade/Section</th><th>Subject</th><th>Week/Date</th><th>Status</th>${actions?'<th>Action</th>':''}</tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.ReportType)}</td><td>${esc(r.EmployeeNameEN||r.EmployeeID)}</td><td>${esc(r.GradeID)} ${esc(r.SectionID||'')}</td><td>${esc(r.SubjectNameEN||r.SubjectID)}</td><td>${esc(r.WeekID||r.Date||'')}</td><td>${statusBadge(r.Status)}<div class="small">V${esc(r.Version)}</div></td>${actions?`<td><button class="btn light" onclick="reviewAction('startReview','${esc(r.ReportType)}','${esc(r.ReportID)}')">Start</button><button class="btn success" onclick="reviewAction('approveReport','${esc(r.ReportType)}','${esc(r.ReportID)}')">Approve</button><button class="btn danger" onclick="returnReview('${esc(r.ReportType)}','${esc(r.ReportID)}')">Return</button></td>`:''}</tr>`).join('')}</tbody></table></div>`:'<div class="notice">No records found.</div>';
-}
-async function reviewAction(action,type,id,comment=''){
-  try{const r=await apiPost({action,reportType:type,reportId:id,comment});setMessage(`Review action completed. Status: ${r.status}`);loadReviewQueue()}catch(e){setMessage(e.message,'error')}
-}
-function returnReview(type,id){const c=prompt('Return comment (required):');if(c)reviewAction('returnReport',type,id,c)}
-
-async function loadTimetableAdmin(){
-  try{
-    const f=await apiGet('timetableImportFolder');
-    document.getElementById('timetableFolderInfo').innerHTML=`<div class="notice"><strong>Pending folder:</strong> <a href="${esc(f.pendingFolderUrl)}" target="_blank">Open Pending</a> · <strong>Processed:</strong> <a href="${esc(f.processedFolderUrl)}" target="_blank">Open Processed</a></div>`;
-    const v=await apiGet('timetableVersions');
-    document.getElementById('timetableVersions').innerHTML=v.length?`<div class="table-wrap"><table><thead><tr><th>Version</th><th>Scope</th><th>Grades</th><th>Gender</th><th>Sections</th><th>Effective</th><th>Status</th></tr></thead><tbody>${v.map(r=>`<tr><td>${esc(r.TimetableVersionID)}</td><td>${esc(r.ScopeName)}</td><td>${esc(r.GradeFrom)}-${esc(r.GradeTo)}</td><td>${esc(r.Gender)}</td><td>${esc(r.ApplicableSections)}</td><td>${esc(r.EffectiveFrom)} → ${esc(r.EffectiveUntil||'')}</td><td>${esc(r.Status)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="notice">No timetable versions found.</div>';
-  }catch(e){setMessage(e.message,'error')}
-}
-async function runTimetableImport(){
-  try{const r=await apiPost({action:'importAscTimetables',effectiveDate:document.getElementById('ttEffectiveDate').value||today()});setMessage(`Timetable import completed. ${r.rowsImported||0} rows imported; ${r.filesMovedToProcessed||0} file(s) moved to Processed.`);console.log(r);loadTimetableAdmin()}catch(e){setMessage(e.message,'error')}
+function findDailyAssignmentForTimetableEntry_(entry, employeeId) {
+  const rows = readMasterTable_('TeacherAssignments');
+  return rows.find(a =>
+    String(a.EmployeeID) === String(employeeId) &&
+    String(a.GradeID) === String(entry.GradeID || (getSectionById_(entry.SectionID) || {}).GradeID || '') &&
+    String(a.SectionID) === String(entry.SectionID) &&
+    String(a.SubjectID) === String(entry.SubjectID) &&
+    (a.Active === '' || isTrue_(a.Active)) &&
+    (a.CanEditDailyReport === '' || isTrue_(a.CanEditDailyReport))
+  ) || null;
 }
 
-async function loadPdfArchive(){
-  try{
-    const p=await apiGet('pdfArchive',{reportType:document.getElementById('pdfType').value,gradeId:document.getElementById('pdfGrade').value,sectionId:document.getElementById('pdfSection').value,weekId:document.getElementById('pdfWeek').value});
-    document.getElementById('pdfArchiveTable').innerHTML=p.rows?.length?`<div class="table-wrap"><table><thead><tr><th>Type</th><th>Grade</th><th>Section</th><th>Week</th><th>File</th><th>Generated</th><th>Download</th></tr></thead><tbody>${p.rows.map(r=>`<tr><td>${esc(r.ReportType)}</td><td>${esc(r.GradeID)}</td><td>${esc(r.SectionID)}</td><td>${esc(r.WeekID)}</td><td>${esc(r.FileName)}</td><td>${esc(r.GeneratedDateTime)}</td><td><button class="btn light" onclick="downloadPdf('${esc(r.PDFID)}')">Open</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="notice">No archived PDFs found.</div>';
-  }catch(e){setMessage(e.message,'error')}
+function validateTimetableEntryEffectiveForDate_(entry, date) {
+  const section = getSectionById_(entry.SectionID);
+  if (!section) throw new Error(`Section "${entry.SectionID}" was not found.`);
+  const context = buildTimetableImportContext_(date);
+  const activeVersion = resolveTimetableVersionForSection_(section, date, context);
+  if (!activeVersion || String(activeVersion.TimetableVersionID) !== String(entry.TimetableVersionID)) {
+    throw new Error('This timetable entry is not active for the selected date.');
+  }
+  const expectedDay = dayOfWeekForDate_(date);
+  if (String(entry.DayOfWeek || '').toLowerCase() !== expectedDay.toLowerCase()) {
+    throw new Error(`This timetable lesson is scheduled for ${entry.DayOfWeek}, not ${expectedDay}.`);
+  }
+  if (!isTrue_(entry.DailyReportRequired)) {
+    throw new Error('Daily Report is not required for this timetable lesson.');
+  }
 }
-async function downloadPdf(id){try{const d=await apiPost({action:'prepareDownload',pdfId:id});window.open(d.url,'_blank')}catch(e){setMessage(e.message,'error')}}
-async function generateFinalPi(){try{const r=await apiPost({action:'generateFinalPI',gradeId:document.getElementById('genPiGrade').value,weekId:document.getElementById('genPiWeek').value});setMessage(`Final PI generated: ${r.FileName}`);loadPdfArchive()}catch(e){setMessage(e.message,'error')}}
-async function generateFinalDaily(){try{const r=await apiPost({action:'generateFinalDailyReport',sectionId:document.getElementById('genDailySection').value,date:document.getElementById('genDailyDate').value});setMessage(`Final Daily Report generated: ${r.FileName}`);loadPdfArchive()}catch(e){setMessage(e.message,'error')}}
 
-async function loadHistory(){
-  try{
-    const h=await apiGet('reportHistory',{reportType:document.getElementById('histType').value,reportId:document.getElementById('histReportId').value});
-    document.getElementById('historyResult').innerHTML=`<div class="notice"><strong>Status:</strong> ${esc(h.currentStatus)} · <strong>Latest Version:</strong> V${esc(h.latestVersion)}</div><div class="table-wrap"><table><thead><tr><th>Action</th><th>From</th><th>To</th><th>By</th><th>Date/Time</th><th>Comment</th><th>Version</th></tr></thead><tbody>${(h.workflow||[]).map(r=>`<tr><td>${esc(r.Action)}</td><td>${esc(r.FromStatus)}</td><td>${esc(r.ToStatus)}</td><td>${esc(r.ActionByName||r.ActionByEmployeeID)}</td><td>${esc(r.ActionDateTime)}</td><td>${esc(r.Comment)}</td><td>V${esc(r.Version)}</td></tr>`).join('')}</tbody></table></div>`;
-  }catch(e){setMessage(e.message,'error')}
+function dayOfWeekForDate_(date) {
+  return Utilities.formatDate(new Date(`${normalizeDate_(date)}T12:00:00`), CONFIG.TIME_ZONE, 'EEEE');
 }
 
-function today(){const d=new Date();return d.toISOString().slice(0,10)}
-document.getElementById('dailyDate').value=today();
-document.getElementById('monDate').value=today();
-document.getElementById('ttEffectiveDate').value=today();
-document.getElementById('genDailyDate').value=today();
-setLanguage('en');
-refreshContext();
-</script>
-</body>
-</html>
+function resolveAcademicCalendarForDate_(dateInput) {
+  const date = normalizeDate_(dateInput);
+  let weeks = [];
+  try { weeks = readMasterTable_('Weeks'); } catch (_) { weeks = []; }
+
+  const match = weeks.find(w => {
+    if (String(w.AcademicYearID || CONFIG.ACADEMIC_YEAR_ID) !== CONFIG.ACADEMIC_YEAR_ID) return false;
+    const start = normalizeDateSafe_(w.StartDate || w.WeekStartDate || w.DateFrom || w.FromDate);
+    const end = normalizeDateSafe_(w.EndDate || w.WeekEndDate || w.DateTo || w.ToDate);
+    return start && end && date >= start && date <= end && (w.Active === '' || isTrue_(w.Active));
+  });
+
+  return {
+    weekId: match ? String(match.WeekID || '') : '',
+    semesterId: match ? String(match.SemesterID || match.TermID || '') : ''
+  };
+}
+
+function validateDailyContentForSubmission_(row) {
+  const missing = dailyMissingFields_(row);
+  if (missing.length) throw new Error(`Complete the following before submitting: ${missing.join(', ')}.`);
+}
+
+function dailyMissingFields_(row) {
+  const fields = ['WhatWeLearnedToday','PerformanceTask','PracticeForMastery'];
+  return fields.filter(f => !String(row[f] || '').trim());
+}
+
+function isDailyContentComplete_(row) {
+  return dailyMissingFields_(row).length === 0;
+}
+
+function safeGetAssignmentById_(id) {
+  try { return getAssignmentById_(id); } catch (_) { return null; }
+}
+
+function canViewSectionDaily_(user, section) {
+  const employeeId = String(user.employee.EmployeeID);
+  if (isFullAdmin_(employeeId)) return true;
+  const roles = getUserRoles_(employeeId, user.employee.JobTitle);
+  if (roles.includes('GeneralAcademicManager')) return true;
+
+  const teacher = readMasterTable_('TeacherAssignments').some(a =>
+    String(a.EmployeeID) === employeeId && String(a.SectionID) === String(section.SectionID) &&
+    (a.Active === '' || isTrue_(a.Active))
+  );
+  if (teacher) return true;
+
+  if (roles.includes('Supervisor')) {
+    const fakeReport = { GradeID: section.GradeID, SectionID: section.SectionID, SubjectID: '' };
+    const scopes = getActiveRowsByEmployee_('SupervisorAssignments', employeeId);
+    const gradeOrder = getGradeSortOrder_(section.GradeID);
+    if (scopes.some(scope => {
+      let gradeOk = true;
+      if (scope.GradeFrom && scope.GradeTo && gradeOrder !== null) {
+        const from = getGradeSortOrder_(scope.GradeFrom), to = getGradeSortOrder_(scope.GradeTo);
+        gradeOk = from !== null && to !== null && gradeOrder >= from && gradeOrder <= to;
+      }
+      const genderOk = String(scope.Gender || 'All') === 'All' || String(scope.Gender) === String(section.Gender || '');
+      const programOk = String(scope.Program || 'All') === 'All' || String(scope.Program) === String(section.Program || 'International');
+      return gradeOk && genderOk && programOk;
+    })) return true;
+  }
+
+  if (roles.includes('Principal')) {
+    const report = { GradeID: section.GradeID, SectionID: section.SectionID, SubjectID: '' };
+    if (principalCanViewReport_(employeeId, report)) return true;
+  }
+  return false;
+}
+
+// -----------------------------------------------------------------------------
+// 7. ACADEMIC WORKFLOW / REVIEW / APPROVAL / RETURN
+// -----------------------------------------------------------------------------
+
+function changeReportStatus_(body, action) {
+  const user = requireCurrentEmployee_();
+  const reportType = normalizeReportType_(body.reportType);
+  const reportId = String(body.reportId || '').trim();
+  const comment = String(body.comment || '').trim();
+
+  if (!reportId) throw new Error('ReportID is required.');
+
+  const rows = getReportRows_(reportType, reportId);
+  if (!rows.length) throw new Error(`${reportType} report was not found.`);
+
+  const sample = rows[0];
+  const currentStatus = String(sample.Status || 'Draft');
+  let nextStatus;
+
+  switch (action) {
+    case 'REVIEW':
+      if (!['Submitted','Resubmitted'].includes(currentStatus)) {
+        throw new Error(`Only Submitted or Resubmitted reports can enter review. Current status: ${currentStatus}.`);
+      }
+      nextStatus = 'Under Review';
+      break;
+    case 'APPROVE':
+      if (!['Submitted','Resubmitted','Under Review'].includes(currentStatus)) {
+        throw new Error(`This report cannot be approved from status ${currentStatus}.`);
+      }
+      nextStatus = 'Approved';
+      break;
+    case 'RETURN':
+      if (!['Submitted','Resubmitted','Under Review'].includes(currentStatus)) {
+        throw new Error(`This report cannot be returned from status ${currentStatus}.`);
+      }
+      nextStatus = 'Returned';
+      if (!comment) throw new Error('A return comment is required.');
+      break;
+    case 'RESUBMIT':
+      if (currentStatus !== 'Returned') {
+        throw new Error('Only Returned reports can be resubmitted.');
+      }
+      nextStatus = reportType === 'PI' ? 'Resubmitted' : 'Submitted';
+      break;
+    default:
+      throw new Error(`Unsupported workflow action: ${action}`);
+  }
+
+  if (['REVIEW','APPROVE','RETURN'].includes(action)) {
+    if (!canSupervisorActOnReport_(user.employee.EmployeeID, sample) &&
+        !isFullAdmin_(user.employee.EmployeeID)) {
+      throw new Error('You are not authorized to review/approve/return this report.');
+    }
+  }
+
+  if (action === 'RESUBMIT') {
+    if (reportType === 'PI') {
+      if (!canTeacherEditPi_(user.employee.EmployeeID, sample) &&
+          !isFullAdmin_(user.employee.EmployeeID)) {
+        throw new Error('Only a teacher assigned to this grade and subject can resubmit this PI.');
+      }
+    } else {
+      const assignment = sample.AssignmentID ? getAssignmentById_(sample.AssignmentID) : null;
+      if (!assignment ||
+          (String(assignment.EmployeeID) !== String(user.employee.EmployeeID) &&
+           !isFullAdmin_(user.employee.EmployeeID))) {
+        throw new Error('Only the assigned teacher can resubmit this report.');
+      }
+    }
+  }
+
+  const version = action === 'RESUBMIT'
+    ? (Number(sample.Version) || 1) + 1
+    : (Number(sample.Version) || 1);
+
+  const now = nowIso_();
+  const sh = getOperationalSS_().getSheetByName(
+    reportType === 'PI' ? SHEETS.PI : SHEETS.DAILY
+  );
+  const headers = reportType === 'PI' ? HEADERS[SHEETS.PI] : HEADERS[SHEETS.DAILY];
+
+  rows.forEach(r => {
+    const patch = {
+      Status: nextStatus,
+      Version: version,
+      UpdatedDateTime: now
+    };
+
+    if (['REVIEW','APPROVE','RETURN'].includes(action)) {
+      patch.ReviewedBy = user.employee.EmployeeID;
+      patch.ReviewedDateTime = now;
+      patch.ReviewComment = comment;
+    }
+
+    if (action === 'RESUBMIT') {
+      patch.SubmittedDateTime = now;
+      patch.ReviewComment = '';
+    }
+
+    updateObjectRow_(sh, headers, r._row, patch);
+  });
+
+  addWorkflow_({
+    reportType,
+    reportId,
+    employeeId: sample.EmployeeID,
+    action,
+    fromStatus: currentStatus,
+    toStatus: nextStatus,
+    comment,
+    version,
+    user
+  });
+
+  audit_({
+    actionType: action,
+    module: reportType === 'PI' ? 'PerformanceIndicator' : 'DailyReport',
+    recordId: reportId,
+    description: `${reportType} status changed from ${currentStatus} to ${nextStatus}.`,
+    oldValue: currentStatus,
+    newValue: nextStatus,
+    success: true,
+    user
+  });
+
+  // Final PDFs are consolidated reports, so approval of an individual
+  // subject/period never generates a PDF automatically.
+  return {
+    reportType,
+    reportId,
+    fromStatus: currentStatus,
+    status: nextStatus,
+    version
+  };
+}
+
+function canSupervisorActOnReport_(employeeId, report) {
+  const rows = getActiveRowsByEmployee_('SupervisorAssignments', employeeId);
+  if (!rows.length) return false;
+
+  const subject = getSubjectById_(report.SubjectID);
+  const gradeOrder = getGradeSortOrder_(report.GradeID);
+
+  const applicableSections = report.PIReportID
+    ? getPiApplicableSections_(report)
+    : (report.SectionID && report.SectionID !== 'ALL'
+        ? [getSectionById_(report.SectionID)].filter(Boolean)
+        : []);
+
+  return rows.some(scope => {
+    const subjectOk =
+      String(scope.SubjectID || '').toUpperCase() === 'ALL' ||
+      String(scope.SubjectID || '') === String(report.SubjectID) ||
+      String(scope.SubjectGroup || '').toUpperCase() === 'ALL' ||
+      (subject && String(scope.SubjectGroup || '') === String(subject.SubjectGroup));
+
+    let gradeOk = true;
+    if (scope.GradeFrom && scope.GradeTo && gradeOrder !== null) {
+      const from = getGradeSortOrder_(scope.GradeFrom);
+      const to = getGradeSortOrder_(scope.GradeTo);
+      gradeOk = from !== null && to !== null && gradeOrder >= from && gradeOrder <= to;
+    }
+
+    const gender = String(scope.Gender || 'All');
+    const genderOk =
+      gender === 'All' ||
+      applicableSections.length === 0 ||
+      applicableSections.some(section => gender === String(section.Gender || ''));
+
+    const program = String(scope.Program || 'International');
+    const programOk =
+      program === 'All' ||
+      applicableSections.length === 0 ||
+      applicableSections.some(section =>
+        program === String(section.Program || 'International')
+      );
+
+    return subjectOk && gradeOk && genderOk && programOk;
+  });
+}
+
+function addWorkflow_(data) {
+  const sh = getOperationalSS_().getSheetByName(SHEETS.WORKFLOW);
+  const id = makeId_('WF');
+
+  appendObjectRow_(sh, HEADERS[SHEETS.WORKFLOW], {
+    WorkflowID: id,
+    ReportType: data.reportType,
+    ReportID: data.reportId,
+    AcademicYearID: CONFIG.ACADEMIC_YEAR_ID,
+    EmployeeID: data.employeeId || '',
+    Action: data.action,
+    FromStatus: data.fromStatus || '',
+    ToStatus: data.toStatus || '',
+    ActionByEmployeeID: data.user.employee.EmployeeID,
+    ActionByName: data.user.employee.EmployeeNameEN || '',
+    ActionDateTime: nowIso_(),
+    Comment: data.comment || '',
+    Version: data.version || 1,
+    Active: true
+  });
+
+  return id;
+}
+
+
+// -----------------------------------------------------------------------------
+// 7B. ACADEMIC REVIEW QUEUE
+// -----------------------------------------------------------------------------
+
+function getAcademicReviewQueue_(params) {
+  const user = requireCurrentEmployee_();
+  const roles = getUserRoles_(user.employee.EmployeeID, user.employee.JobTitle);
+
+  if (!roles.some(r => ['Supervisor','SystemAdmin'].includes(r))) {
+    throw new Error('You do not have academic review access.');
+  }
+
+  const requestedType = String(params.reportType || '').trim().toUpperCase();
+  const requestedStatus = String(params.status || '').trim();
+  const gradeId = String(params.gradeId || '').trim();
+  const sectionId = String(params.sectionId || '').trim();
+  const subjectId = String(params.subjectId || '').trim();
+  const weekId = String(params.weekId || '').trim();
+  const date = params.date ? normalizeDate_(params.date) : '';
+
+  const rows = [];
+
+  if (!requestedType || requestedType === 'PI') {
+    sheetToObjects_(getOperationalSS_().getSheetByName(SHEETS.PI))
+      .filter(r => isTrueOrBlank_(r.Active))
+      .forEach(r => {
+        if (!canSupervisorActOnReport_(user.employee.EmployeeID, r) &&
+            !isFullAdmin_(user.employee.EmployeeID)) return;
+        if (requestedStatus && String(r.Status) !== requestedStatus) return;
+        if (gradeId && String(r.GradeID) !== gradeId) return;
+        if (subjectId && String(r.SubjectID) !== subjectId) return;
+        if (weekId && String(r.WeekID) !== weekId) return;
+
+        rows.push(buildReviewQueueRow_('PI', r));
+      });
+  }
+
+  if (!requestedType || ['DAILY','DAILYREPORT','DAILY_REPORT'].includes(requestedType)) {
+    sheetToObjects_(getOperationalSS_().getSheetByName(SHEETS.DAILY))
+      .filter(r => isTrueOrBlank_(r.Active))
+      .forEach(r => {
+        if (!canSupervisorActOnReport_(user.employee.EmployeeID, r) &&
+            !isFullAdmin_(user.employee.EmployeeID)) return;
+        if (requestedStatus && String(r.Status) !== requestedStatus) return;
+        if (gradeId && String(r.GradeID) !== gradeId) return;
+        if (sectionId && String(r.SectionID) !== sectionId) return;
+        if (subjectId && String(r.SubjectID) !== subjectId) return;
+        if (date && normalizeDate_(r.Date) !== date) return;
+
+        rows.push(buildReviewQueueRow_('DAILY', r));
+      });
+  }
+
+  rows.sort((a, b) => {
+    if (a.AwaitingReview !== b.AwaitingReview) return a.AwaitingReview ? -1 : 1;
+    return String(b.SubmittedDateTime || '').localeCompare(String(a.SubmittedDateTime || ''));
+  });
+
+  return {
+    counts: {
+      total: rows.length,
+      submitted: rows.filter(r => r.Status === 'Submitted').length,
+      underReview: rows.filter(r => r.Status === 'Under Review').length,
+      returned: rows.filter(r => r.Status === 'Returned').length,
+      resubmitted: rows.filter(r => r.Status === 'Resubmitted').length,
+      approved: rows.filter(r => r.Status === 'Approved').length,
+      awaitingReview: rows.filter(r => r.AwaitingReview).length
+    },
+    rows
+  };
+}
+
+function buildReviewQueueRow_(reportType, r) {
+  const emp = getEmployeeByIdSafe_(r.EmployeeID);
+  const subj = getSubjectById_(r.SubjectID) || {};
+  const status = String(r.Status || 'Draft');
+
+  return {
+    ReportType: reportType,
+    ReportID: reportType === 'PI' ? r.PIReportID : r.DailyReportID,
+    Status: status,
+    Version: Number(r.Version) || 1,
+    EmployeeID: r.EmployeeID || '',
+    EmployeeNameEN: emp.EmployeeNameEN || '',
+    EmployeeNameAR: emp.EmployeeNameAR || '',
+    GradeID: r.GradeID || '',
+    SectionID: reportType === 'DAILY' ? (r.SectionID || '') : '',
+    SubjectID: r.SubjectID || '',
+    SubjectNameEN: subj.SubjectNameEN || '',
+    SubjectNameAR: subj.SubjectNameAR || '',
+    WeekID: r.WeekID || '',
+    Date: reportType === 'DAILY' ? normalizeDate_(r.Date) : '',
+    PeriodNumber: reportType === 'DAILY' ? (r.PeriodNumber || '') : '',
+    ApplicableSectionsMode: reportType === 'PI' ? (r.ApplicableSectionsMode || 'ALL') : '',
+    ApplicableSections: reportType === 'PI' ? (r.ApplicableSections || '') : '',
+    SubmittedDateTime: r.SubmittedDateTime || '',
+    ReviewedBy: r.ReviewedBy || '',
+    ReviewedDateTime: r.ReviewedDateTime || '',
+    ReviewComment: r.ReviewComment || '',
+    AwaitingReview: ['Submitted','Resubmitted','Under Review'].includes(status)
+  };
+}
+
+function getAcademicReviewHistory_(reportTypeInput, reportId) {
+  const user = requireCurrentEmployee_();
+  const reportType = normalizeReportType_(reportTypeInput);
+  const reportRows = getReportRows_(reportType, reportId);
+
+  if (!reportRows.length) throw new Error('Report was not found.');
+  if (!canViewReport_(user, reportRows[0])) {
+    throw new Error('You do not have permission to view this report history.');
+  }
+
+  return sheetToObjects_(getOperationalSS_().getSheetByName(SHEETS.WORKFLOW))
+    .filter(r =>
+      String(r.ReportType) === reportType &&
+      String(r.ReportID) === String(reportId) &&
+      isTrueOrBlank_(r.Active)
+    )
+    .sort((a, b) =>
+      String(a.ActionDateTime || '').localeCompare(String(b.ActionDateTime || ''))
+    )
+    .map(stripInternalFields_);
+}
+
+function getEmployeeByIdSafe_(employeeId) {
+  if (!employeeId) return {};
+  return readMasterTable_('Employees')
+    .find(r => String(r.EmployeeID) === String(employeeId)) || {};
+}
+
+// -----------------------------------------------------------------------------
+// 8. MONITORING LOG
+// -----------------------------------------------------------------------------
+
+function logMonitoring_(body) {
+  const user = requireCurrentEmployee_();
+  const roles = getUserRoles_(user.employee.EmployeeID, user.employee.JobTitle);
+
+  if (!roles.some(r => ['Supervisor','Principal','GeneralAcademicManager','SystemAdmin'].includes(r))) {
+    throw new Error('You do not have monitoring access.');
+  }
+
+  const sh = getOperationalSS_().getSheetByName(SHEETS.MONITORING);
+  const id = makeId_('MON');
+
+  const record = {
+    MonitoringID: id,
+    AcademicYearID: CONFIG.ACADEMIC_YEAR_ID,
+    SemesterID: body.semesterId || '',
+    WeekID: body.weekId || '',
+    MonitorEmployeeID: user.employee.EmployeeID,
+    TargetEmployeeID: body.targetEmployeeId || '',
+    GradeID: body.gradeId || '',
+    SectionID: body.sectionId || '',
+    SubjectID: body.subjectId || '',
+    MonitoringType: body.monitoringType || 'Academic Follow-up',
+    ReferenceReportID: body.referenceReportId || '',
+    Finding: body.finding || '',
+    ActionRequired: body.actionRequired || '',
+    DueDate: body.dueDate ? normalizeDate_(body.dueDate) : '',
+    FollowUpStatus: body.followUpStatus || 'Open',
+    FollowUpDate: body.followUpDate ? normalizeDate_(body.followUpDate) : '',
+    Notes: body.notes || '',
+    CreatedDateTime: nowIso_(),
+    Active: true
+  };
+
+  appendObjectRow_(sh, HEADERS[SHEETS.MONITORING], record);
+
+  audit_({
+    actionType: 'CREATE',
+    module: 'MonitoringLog',
+    recordId: id,
+    description: 'Monitoring/follow-up record created.',
+    oldValue: '',
+    newValue: compactJson_(record),
+    success: true,
+    user
+  });
+
+  return record;
+}
+
+// -----------------------------------------------------------------------------
+// 9. PDF GENERATION + ARCHIVE
+// -----------------------------------------------------------------------------
+
+function generatePdfForReport_() {
+  throw new Error(
+    'Individual subject/period PDFs are disabled. Generate the consolidated weekly PI or class/day Daily Report instead.'
+  );
+}
+
+function generateCombinedPiPdf_(input) {
+  const user = requireCurrentEmployee_();
+  const weekId = String(input.weekId || input.WeekID || '').trim();
+  const gradeId = String(input.gradeId || input.GradeID || '').trim();
+
+  if (!weekId) throw new Error('WeekID is required.');
+  if (!gradeId) throw new Error('GradeID is required.');
+
+  const piRows = sheetToObjects_(getOperationalSS_().getSheetByName(SHEETS.PI))
+    .filter(r =>
+      String(r.AcademicYearID) === CONFIG.ACADEMIC_YEAR_ID &&
+      String(r.WeekID) === weekId &&
+      String(r.GradeID) === gradeId &&
+      isTrueOrBlank_(r.Active)
+    );
+
+  if (!piRows.length) {
+    throw new Error(`No PI records were found for ${gradeId} / ${weekId}.`);
+  }
+
+  const visibleRows = piRows.filter(r => canViewReport_(user, r));
+  if (!visibleRows.length && !isFullAdmin_(user.employee.EmployeeID)) {
+    throw new Error('You do not have permission to generate this grade PI.');
+  }
+
+  const notApproved = piRows.filter(r => String(r.Status) !== 'Approved');
+  if (notApproved.length) {
+    const names = notApproved.map(r => String(r.SubjectID || '')).filter(Boolean);
+    throw new Error(
+      `Final PI cannot be generated yet. ${notApproved.length} subject PI record(s) are not Approved: ${names.join(', ')}`
+    );
+  }
+
+  const missingRequired = getMissingRequiredPiSubjects_(gradeId, weekId, piRows);
+  if (missingRequired.length) {
+    throw new Error(
+      `Final PI cannot be generated yet. Missing required PI subject(s): ${missingRequired.join(', ')}`
+    );
+  }
+
+  const semesterId = String(piRows[0].SemesterID || '');
+  const combinedReportId = makeCombinedPiReportId_(weekId, gradeId);
+  const version = Math.max(...piRows.map(r => Number(r.Version) || 1));
+
+  const existing = findActivePdf_('PI_COMBINED', combinedReportId, version);
+  if (existing) return existing;
+
+  const folders = getAcademicReportBaseFolders_();
+  const semesterFolder = getOrCreateChildFolder_(folders.pi, semesterFolderLabel_(semesterId));
+  const weekFolder = getOrCreateChildFolder_(semesterFolder, weekFolderLabel_(weekId));
+
+  const title = sanitizeFileName_(`PI_${gradeId}_${weekId}_V${version}`);
+  const doc = DocumentApp.create(title);
+  const body = doc.getBody();
+
+  body.appendParagraph('DELTA INTERNATIONAL SCHOOLS')
+    .setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  body.appendParagraph('Weekly Performance Indicator')
+    .setHeading(DocumentApp.ParagraphHeading.HEADING1);
+  body.appendParagraph(`Academic Year: ${CONFIG.ACADEMIC_YEAR_ID}`);
+  body.appendParagraph(`Semester: ${semesterId}`);
+  body.appendParagraph(`Week: ${weekId}`);
+  body.appendParagraph(`Grade: ${gradeId}`);
+  body.appendParagraph(`Combined Version: V${version}`);
+  body.appendHorizontalRule();
+
+  const subjects = readMasterTable_('Subjects');
+  const subjectById = Object.fromEntries(subjects.map(s => [String(s.SubjectID), s]));
+  const ordered = [...piRows].sort((a, b) => {
+    const sa = subjectById[String(a.SubjectID)] || {};
+    const sb = subjectById[String(b.SubjectID)] || {};
+    return (Number(sa.DisplayOrder) || 999) - (Number(sb.DisplayOrder) || 999) ||
+      String(a.SubjectID).localeCompare(String(b.SubjectID));
+  });
+
+  ordered.forEach(pi => {
+    const subject = subjectById[String(pi.SubjectID)] || {};
+    const subjectName = subject.SubjectNameEN || pi.SubjectID || '';
+    const sectionLabel = String(pi.ApplicableSectionsMode || 'ALL').toUpperCase() === 'ALL'
+      ? 'ALL'
+      : String(pi.ApplicableSections || '');
+
+    body.appendParagraph(subjectName)
+      .setHeading(DocumentApp.ParagraphHeading.HEADING2);
+    body.appendParagraph(`Applicable Sections: ${sectionLabel}`);
+
+    const details = getPiDetails_(pi.PIReportID)
+      .sort((a, b) => Number(a.PeriodNumber) - Number(b.PeriodNumber));
+
+    details.forEach(d => {
+      body.appendParagraph(`Weekly Period ${d.PeriodNumber}`)
+        .setHeading(DocumentApp.ParagraphHeading.HEADING3);
+      appendField_(body, 'Lesson', d.Lesson);
+      appendField_(body, 'Classwork', d.Classwork);
+      appendField_(body, 'Performance Task', d.PerformanceTask);
+      appendField_(body, 'Objectives', d.Objectives);
+    });
+
+    body.appendHorizontalRule();
+  });
+
+  doc.saveAndClose();
+  const pdfFile = saveDocumentAsPdf_(doc.getId(), weekFolder, `${title}.pdf`);
+
+  return archiveCombinedPdf_({
+    reportType: 'PI_COMBINED',
+    reportId: combinedReportId,
+    gradeId,
+    sectionId: 'ALL',
+    subjectId: 'ALL',
+    semesterId,
+    weekId,
+    file: pdfFile,
+    folder: weekFolder,
+    version,
+    user
+  });
+}
+
+function generateCombinedDailyPdf_(input) {
+  const user = requireCurrentEmployee_();
+  const date = normalizeDate_(input.date || input.Date);
+  const sectionId = String(input.sectionId || input.SectionID || '').trim();
+
+  if (!date) throw new Error('Date is required.');
+  if (!sectionId) throw new Error('SectionID is required.');
+
+  const section = getSectionById_(sectionId);
+  if (!section || (section.Active !== '' && !isTrue_(section.Active))) {
+    throw new Error(`Active section "${sectionId}" was not found.`);
+  }
+
+  if (!canViewSectionDaily_(user, section) && !isFullAdmin_(user.employee.EmployeeID)) {
+    throw new Error('You do not have permission to generate this class Daily Report.');
+  }
+
+  const completion = buildSectionDailyCompletion_(date, section);
+  if (!completion.required) {
+    throw new Error(`No reportable timetable periods were found for ${sectionId} on ${date}.`);
+  }
+
+  const incomplete = completion.entries.filter(e =>
+    !e.DailyReportID ||
+    String(e.Status) !== 'Approved' ||
+    !e.contentComplete
+  );
+
+  if (incomplete.length) {
+    const details = incomplete.map(e =>
+      `P${e.PeriodNumber} ${e.SubjectID} (${e.Status || 'Not Started'})`
+    );
+    throw new Error(
+      `Final Daily Report cannot be generated yet. ${incomplete.length} period(s) are incomplete/not approved: ${details.join(', ')}`
+    );
+  }
+
+  const actualRows = sheetToObjects_(getOperationalSS_().getSheetByName(SHEETS.DAILY))
+    .filter(r =>
+      String(r.AcademicYearID) === CONFIG.ACADEMIC_YEAR_ID &&
+      normalizeDate_(r.Date) === date &&
+      String(r.SectionID) === sectionId &&
+      isTrueOrBlank_(r.Active)
+    );
+
+  const semesterId = actualRows.length ? String(actualRows[0].SemesterID || '') : '';
+  const weekId = actualRows.length ? String(actualRows[0].WeekID || '') : '';
+  const combinedReportId = makeCombinedDailyReportId_(date, sectionId);
+  const version = actualRows.length
+    ? Math.max(...actualRows.map(r => Number(r.Version) || 1))
+    : 1;
+
+  const existing = findActivePdf_('DAILY_COMBINED', combinedReportId, version);
+  if (existing) return existing;
+
+  const folders = getAcademicReportBaseFolders_();
+  const semesterFolder = getOrCreateChildFolder_(folders.daily, semesterFolderLabel_(semesterId));
+  const classFolder = getOrCreateChildFolder_(semesterFolder, sanitizeFileName_(sectionId));
+
+  const title = sanitizeFileName_(`DailyReport_${sectionId}_${date}_V${version}`);
+  const doc = DocumentApp.create(title);
+  const body = doc.getBody();
+
+  body.appendParagraph('DELTA INTERNATIONAL SCHOOLS')
+    .setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  body.appendParagraph('Daily Learning Report')
+    .setHeading(DocumentApp.ParagraphHeading.HEADING1);
+  body.appendParagraph(`Academic Year: ${CONFIG.ACADEMIC_YEAR_ID}`);
+  body.appendParagraph(`Semester: ${semesterId}`);
+  body.appendParagraph(`Date: ${formatDateDisplay_(date)}`);
+  body.appendParagraph(`Grade: ${section.GradeID || ''}`);
+  body.appendParagraph(`Class / Section: ${sectionId}`);
+  body.appendParagraph(`Combined Version: V${version}`);
+  body.appendHorizontalRule();
+
+  const subjects = readMasterTable_('Subjects');
+  const subjectById = Object.fromEntries(subjects.map(s => [String(s.SubjectID), s]));
+  const employeeRows = readMasterTable_('Employees');
+  const employeeById = Object.fromEntries(employeeRows.map(e => [String(e.EmployeeID), e]));
+
+  [...completion.entries]
+    .sort((a, b) => Number(a.PeriodNumber) - Number(b.PeriodNumber))
+    .forEach(entry => {
+      const subject = subjectById[String(entry.SubjectID)] || {};
+      const emp = employeeById[String(entry.EmployeeID)] || {};
+      const subjectName = subject.SubjectNameEN || entry.SubjectID || '';
+      const teacherName = emp.EmployeeNameEN || emp.EmployeeNameAR || entry.EmployeeID || '';
+
+      body.appendParagraph(`Period ${entry.PeriodNumber} — ${subjectName}`)
+        .setHeading(DocumentApp.ParagraphHeading.HEADING2);
+      if (teacherName) body.appendParagraph(`Teacher: ${teacherName}`);
+      appendField_(body, 'What We Learned Today', entry.WhatWeLearnedToday);
+      appendField_(body, 'Performance Task', entry.PerformanceTask);
+      appendField_(body, 'Practice for Mastery', entry.PracticeForMastery);
+      body.appendHorizontalRule();
+    });
+
+  doc.saveAndClose();
+  const pdfFile = saveDocumentAsPdf_(doc.getId(), classFolder, `${title}.pdf`);
+
+  return archiveCombinedPdf_({
+    reportType: 'DAILY_COMBINED',
+    reportId: combinedReportId,
+    gradeId: section.GradeID || '',
+    sectionId,
+    subjectId: 'ALL',
+    semesterId,
+    weekId,
+    file: pdfFile,
+    folder: classFolder,
+    version,
+    user
+  });
+}
+
+function getMissingRequiredPiSubjects_(gradeId, weekId, existingPiRows) {
+  const mapRows = readMasterTable_('SubjectGradeMap').filter(r =>
+    String(r.AcademicYearID || CONFIG.ACADEMIC_YEAR_ID) === CONFIG.ACADEMIC_YEAR_ID &&
+    String(r.GradeID) === String(gradeId) &&
+    (r.Active === '' || isTrue_(r.Active)) &&
+    (r.Applicable === '' || isTrue_(r.Applicable))
+  );
+
+  const requiredRows = mapRows.filter(r => {
+    if ('PIRequired' in r) return isTrue_(r.PIRequired);
+    if ('PerformanceIndicatorRequired' in r) return isTrue_(r.PerformanceIndicatorRequired);
+    if ('IncludeInPI' in r) return isTrue_(r.IncludeInPI);
+    // If no PI-specific flag exists, an applicable subject is considered PI-required.
+    return true;
+  });
+
+  const existing = new Set(existingPiRows.map(r => String(r.SubjectID)));
+  return requiredRows
+    .map(r => String(r.SubjectID || '').trim())
+    .filter(Boolean)
+    .filter(id => !existing.has(id));
+}
+
+function archiveCombinedPdf_(data) {
+  const pdfId = makeId_('PDF');
+  const record = {
+    PDFID: pdfId,
+    AcademicYearID: CONFIG.ACADEMIC_YEAR_ID,
+    ReportType: data.reportType,
+    ReportID: data.reportId,
+    EmployeeID: '',
+    GradeID: data.gradeId || '',
+    SectionID: data.sectionId || '',
+    SubjectID: data.subjectId || 'ALL',
+    SemesterID: data.semesterId || '',
+    WeekID: data.weekId || '',
+    FileName: data.file.getName(),
+    DriveFileID: data.file.getId(),
+    DriveFolderID: data.folder.getId(),
+    GeneratedByEmployeeID: data.user.employee.EmployeeID,
+    GeneratedDateTime: nowIso_(),
+    Version: data.version || 1,
+    ApprovalStatus: 'Final',
+    Active: true
+  };
+
+  appendObjectRow_(
+    getOperationalSS_().getSheetByName(SHEETS.PDF),
+    HEADERS[SHEETS.PDF],
+    record
+  );
+
+  audit_({
+    actionType: 'PDF_GENERATE',
+    module: 'PDFArchive',
+    recordId: pdfId,
+    description: `Consolidated ${data.reportType} PDF generated: ${record.FileName}.`,
+    oldValue: '',
+    newValue: compactJson_(record),
+    success: true,
+    user: data.user
+  });
+
+  return record;
+}
+
+function saveDocumentAsPdf_(docId, destinationFolder, fileName) {
+  const docFile = DriveApp.getFileById(docId);
+  const pdfBlob = docFile.getAs(MimeType.PDF).setName(fileName);
+  const pdfFile = destinationFolder.createFile(pdfBlob);
+  docFile.setTrashed(true);
+  return pdfFile;
+}
+
+function appendField_(body, label, value) {
+  const p = body.appendParagraph('');
+  p.appendText(`${label}: `).setBold(true);
+  p.appendText(String(value ?? ''));
+}
+
+function findActivePdf_(reportType, reportId, version) {
+  return sheetToObjects_(getOperationalSS_().getSheetByName(SHEETS.PDF))
+    .find(r =>
+      String(r.ReportType) === String(reportType) &&
+      String(r.ReportID) === String(reportId) &&
+      Number(r.Version) === Number(version) &&
+      isTrueOrBlank_(r.Active)
+    ) || null;
+}
+
+function getOrCreatePdfRootFolder_() {
+  return DriveApp.getFolderById(CONFIG.ACADEMIC_REPORTS_ROOT_FOLDER_ID);
+}
+
+function getAcademicReportBaseFolders_() {
+  const root = getOrCreatePdfRootFolder_();
+  return {
+    root,
+    pi: getRequiredChildFolder_(root, CONFIG.PI_FOLDER_NAME),
+    daily: getRequiredChildFolder_(root, CONFIG.DAILY_PDF_FOLDER_NAME)
+  };
+}
+
+function getRequiredChildFolder_(parent, name) {
+  const matches = parent.getFoldersByName(name);
+  if (!matches.hasNext()) {
+    throw new Error(
+      `Required Google Drive folder "${name}" was not found inside the Academic Reports root folder.`
+    );
+  }
+  return matches.next();
+}
+
+function getOrCreateChildFolder_(parent, name) {
+  const safeName = String(name || '').trim() || 'Unassigned';
+  const matches = parent.getFoldersByName(safeName);
+  if (matches.hasNext()) return matches.next();
+  return parent.createFolder(safeName);
+}
+
+function semesterFolderLabel_(semesterId) {
+  const s = String(semesterId || '').trim();
+  if (!s) return 'Semester Unassigned';
+
+  const m = s.match(/(?:SEMESTER|SEM|S)[\s_-]*(\d+)/i);
+  if (m) return `Semester ${m[1]}`;
+
+  return sanitizeFileName_(s);
+}
+
+function weekFolderLabel_(weekId) {
+  const s = String(weekId || '').trim();
+  if (!s) return 'Week Unassigned';
+
+  const m = s.match(/W(?:EEK)?[\s_-]*0*(\d+)/i);
+  if (m) return `Week ${String(Number(m[1])).padStart(2, '0')}`;
+
+  return sanitizeFileName_(s);
+}
+
+function makeCombinedPiReportId_(weekId, gradeId) {
+  return sanitizeId_(`PI_FINAL_${shortAcademicYear_(CONFIG.ACADEMIC_YEAR_ID)}_${weekId}_${gradeId}`);
+}
+
+function makeCombinedDailyReportId_(date, sectionId) {
+  return sanitizeId_(
+    `DR_FINAL_${shortAcademicYear_(CONFIG.ACADEMIC_YEAR_ID)}_${String(date).replace(/-/g, '')}_${sectionId}`
+  );
+}
+
+
+// -----------------------------------------------------------------------------
+// 9B. HISTORY, VERSIONS & PDF ARCHIVE RETRIEVAL
+// -----------------------------------------------------------------------------
+
+function getReportVersionHistory_(reportTypeInput, reportId) {
+  const user = requireCurrentEmployee_();
+  const reportType = normalizeReportType_(reportTypeInput);
+  const rows = getReportRows_(reportType, reportId);
+
+  if (!rows.length) throw new Error('Report was not found.');
+  if (!canViewReport_(user, rows[0])) {
+    throw new Error('You do not have permission to view this report history.');
+  }
+
+  const workflow = sheetToObjects_(getOperationalSS_().getSheetByName(SHEETS.WORKFLOW))
+    .filter(r =>
+      String(r.ReportType) === reportType &&
+      String(r.ReportID) === String(reportId) &&
+      isTrueOrBlank_(r.Active)
+    )
+    .sort((a, b) =>
+      String(a.ActionDateTime || '').localeCompare(String(b.ActionDateTime || ''))
+    )
+    .map(stripInternalFields_);
+
+  const current = rows.map(stripInternalFields_);
+
+  return {
+    reportType,
+    reportId,
+    current,
+    workflow,
+    latestVersion: Math.max(...rows.map(r => Number(r.Version) || 1)),
+    currentStatus: String(rows[0].Status || '')
+  };
+}
+
+function getPdfArchive_(params) {
+  const user = requireCurrentEmployee_();
+  const roles = getUserRoles_(user.employee.EmployeeID, user.employee.JobTitle);
+
+  const reportType = String(params.reportType || '').trim().toUpperCase();
+  const gradeId = String(params.gradeId || '').trim();
+  const sectionId = String(params.sectionId || '').trim();
+  const semesterId = String(params.semesterId || '').trim();
+  const weekId = String(params.weekId || '').trim();
+
+  const rows = sheetToObjects_(getOperationalSS_().getSheetByName(SHEETS.PDF))
+    .filter(r => isTrueOrBlank_(r.Active))
+    .filter(r => !reportType || String(r.ReportType || '').toUpperCase() === reportType)
+    .filter(r => !gradeId || String(r.GradeID || '') === gradeId)
+    .filter(r => !sectionId || String(r.SectionID || '') === sectionId)
+    .filter(r => !semesterId || String(r.SemesterID || '') === semesterId)
+    .filter(r => !weekId || String(r.WeekID || '') === weekId)
+    .filter(r => {
+      if (roles.some(x => ['SystemAdmin','GeneralAcademicManager'].includes(x))) return true;
+      if (roles.includes('ReportPersonnel')) return true;
+      if (roles.includes('Principal')) return principalCanViewPdf_(user.employee.EmployeeID, r);
+      if (roles.includes('Supervisor')) return supervisorCanViewPdf_(user.employee.EmployeeID, r);
+      return false;
+    })
+    .sort((a, b) =>
+      String(b.GeneratedDateTime || '').localeCompare(String(a.GeneratedDateTime || ''))
+    )
+    .map(stripInternalFields_);
+
+  return {
+    count: rows.length,
+    rows
+  };
+}
+
+function getDownloadHistory_(params) {
+  const user = requireCurrentEmployee_();
+  const roles = getUserRoles_(user.employee.EmployeeID, user.employee.JobTitle);
+
+  if (!roles.some(r => ['SystemAdmin','GeneralAcademicManager','Principal','ReportPersonnel'].includes(r))) {
+    throw new Error('You do not have permission to view download history.');
+  }
+
+  const pdfId = String(params.pdfId || '').trim();
+  const reportType = String(params.reportType || '').trim().toUpperCase();
+
+  const rows = sheetToObjects_(getOperationalSS_().getSheetByName(SHEETS.DOWNLOAD))
+    .filter(r => isTrueOrBlank_(r.Active))
+    .filter(r => !pdfId || String(r.PDFID) === pdfId)
+    .filter(r => !reportType || String(r.ReportType || '').toUpperCase() === reportType)
+    .sort((a, b) =>
+      String(b.DownloadDateTime || '').localeCompare(String(a.DownloadDateTime || ''))
+    )
+    .map(stripInternalFields_);
+
+  return {
+    count: rows.length,
+    rows
+  };
+}
+
+function principalCanViewPdf_(employeeId, pdfRow) {
+  const pseudoReport = {
+    EmployeeID: pdfRow.EmployeeID || '',
+    GradeID: pdfRow.GradeID || '',
+    SectionID: pdfRow.SectionID || '',
+    SubjectID: pdfRow.SubjectID || '',
+    Status: 'Approved'
+  };
+  return principalCanViewReport_(employeeId, pseudoReport);
+}
+
+function supervisorCanViewPdf_(employeeId, pdfRow) {
+  const pseudoReport = {
+    EmployeeID: pdfRow.EmployeeID || '',
+    GradeID: pdfRow.GradeID || '',
+    SectionID: pdfRow.SectionID || 'ALL',
+    SubjectID: pdfRow.SubjectID || 'ALL',
+    Status: 'Approved'
+  };
+  return canSupervisorActOnReport_(employeeId, pseudoReport);
+}
+
+// -----------------------------------------------------------------------------
+// 10. DOWNLOAD HISTORY
+// -----------------------------------------------------------------------------
+
+function preparePdfDownload_(pdfId) {
+  const user = requireCurrentEmployee_();
+  const pdf = findPdfById_(pdfId);
+  if (!pdf) throw new Error('PDF record was not found.');
+
+  const roles = getUserRoles_(user.employee.EmployeeID, user.employee.JobTitle);
+  const allowed = roles.some(r =>
+    ['ReportPersonnel','Principal','GeneralAcademicManager','SystemAdmin','Supervisor'].includes(r)
+  );
+
+  if (!allowed) throw new Error('You do not have permission to download finalized PDFs.');
+
+  const file = DriveApp.getFileById(pdf.DriveFileID);
+
+  logDownload_(pdf, user, roles);
+
+  // The website can open this URL after the log is created.
+  return {
+    PDFID: pdf.PDFID,
+    FileName: pdf.FileName,
+    DriveFileID: pdf.DriveFileID,
+    url: file.getUrl()
+  };
+}
+
+function getPdfForDownload_(pdfId) {
+  return preparePdfDownload_(pdfId);
+}
+
+function logDownload_(pdf, user, roles) {
+  const sh = getOperationalSS_().getSheetByName(SHEETS.DOWNLOAD);
+  const id = makeId_('DL');
+
+  const record = {
+    DownloadID: id,
+    PDFID: pdf.PDFID,
+    ReportType: pdf.ReportType,
+    ReportID: pdf.ReportID,
+    DownloadedByEmployeeID: user.employee.EmployeeID,
+    DownloadedByName: user.employee.EmployeeNameEN || '',
+    DownloadDateTime: nowIso_(),
+    UserEmail: user.email,
+    UserRole: roles.join(','),
+    Active: true
+  };
+
+  appendObjectRow_(sh, HEADERS[SHEETS.DOWNLOAD], record);
+
+  audit_({
+    actionType: 'DOWNLOAD',
+    module: 'PDFArchive',
+    recordId: pdf.PDFID,
+    description: `PDF download prepared: ${pdf.FileName}.`,
+    oldValue: '',
+    newValue: compactJson_(record),
+    success: true,
+    user
+  });
+
+  return record;
+}
+
+function findPdfById_(pdfId) {
+  return sheetToObjects_(getOperationalSS_().getSheetByName(SHEETS.PDF))
+    .find(r => String(r.PDFID) === String(pdfId) && isTrueOrBlank_(r.Active));
+}
+
+// -----------------------------------------------------------------------------
+// 11. AUDIT LOG
+// -----------------------------------------------------------------------------
+
+function audit_(data) {
+  const sh = getOperationalSS_().getSheetByName(SHEETS.AUDIT);
+  if (!sh) return;
+
+  let user = data.user;
+  if (!user) {
+    try {
+      user = requireCurrentEmployee_();
+    } catch (_) {
+      user = {
+        email: normalizeEmail_(Session.getActiveUser().getEmail()),
+        employee: {
+          EmployeeID: '',
+          EmployeeNameEN: ''
+        }
+      };
+    }
+  }
+
+  let roles = [];
+  try {
+    roles = getUserRoles_(user.employee.EmployeeID, user.employee.JobTitle);
+  } catch (_) {}
+
+  const record = {
+    AuditID: makeId_('AUD'),
+    AcademicYearID: CONFIG.ACADEMIC_YEAR_ID,
+    ActionDateTime: nowIso_(),
+    EmployeeID: user.employee.EmployeeID || '',
+    EmployeeName: user.employee.EmployeeNameEN || '',
+    UserEmail: user.email || '',
+    UserRole: roles.join(','),
+    ActionType: data.actionType || '',
+    Module: data.module || '',
+    RecordID: data.recordId || '',
+    Description: data.description || '',
+    OldValue: truncate_(data.oldValue || '', 10000),
+    NewValue: truncate_(data.newValue || '', 10000),
+    IPAddress: '', // Apps Script web apps do not reliably expose client IP.
+    SessionID: Session.getTemporaryActiveUserKey() || '',
+    Success: data.success !== false
+  };
+
+  appendObjectRow_(sh, HEADERS[SHEETS.AUDIT], record);
+}
+
+// -----------------------------------------------------------------------------
+// 12. REPORT RETRIEVAL
+// -----------------------------------------------------------------------------
+
+function getReport_(reportTypeInput, reportId) {
+  const user = requireCurrentEmployee_();
+  const reportType = normalizeReportType_(reportTypeInput);
+  const rows = getReportRows_(reportType, reportId);
+
+  if (!rows.length) throw new Error('Report was not found.');
+
+  // View permission check.
+  const sample = rows[0];
+  if (!canViewReport_(user, sample)) {
+    throw new Error('You do not have permission to view this report.');
+  }
+
+  return rows.map(stripInternalFields_);
+}
+
+function getReportRows_(reportType, reportId) {
+  const sh = getOperationalSS_().getSheetByName(
+    reportType === 'PI' ? SHEETS.PI : SHEETS.DAILY
+  );
+
+  const idField = reportType === 'PI' ? 'PIReportID' : 'DailyReportID';
+
+  return sheetToObjects_(sh)
+    .filter(r =>
+      String(r[idField]) === String(reportId) &&
+      isTrueOrBlank_(r.Active)
+    );
+}
+
+function canViewReport_(user, report) {
+  if (String(report.EmployeeID) === String(user.employee.EmployeeID)) return true;
+  if (report.PIReportID && canTeacherEditPi_(user.employee.EmployeeID, report)) return true;
+  if (isFullAdmin_(user.employee.EmployeeID)) return true;
+
+  const roles = getUserRoles_(user.employee.EmployeeID, user.employee.JobTitle);
+  if (roles.includes('GeneralAcademicManager')) return true;
+
+  if (roles.includes('Supervisor') &&
+      canSupervisorActOnReport_(user.employee.EmployeeID, report)) {
+    return true;
+  }
+
+  if (roles.includes('Principal') &&
+      principalCanViewReport_(user.employee.EmployeeID, report)) {
+    return true;
+  }
+
+  if (roles.includes('ReportPersonnel') &&
+      String(report.Status) === 'Approved') {
+    return true;
+  }
+
+  return false;
+}
+
+function principalCanViewReport_(employeeId, report) {
+  const scopes = getActiveRowsByEmployee_('PrincipalScopes', employeeId);
+  if (!scopes.length) return false;
+
+  const gradeOrder = getGradeSortOrder_(report.GradeID);
+  const applicableSections = report.PIReportID
+    ? getPiApplicableSections_(report)
+    : (report.SectionID && report.SectionID !== 'ALL'
+        ? [getSectionById_(report.SectionID)].filter(Boolean)
+        : []);
+
+  return scopes.some(scope => {
+    let gradeOk = true;
+
+    if (scope.GradeFrom && scope.GradeTo && gradeOrder !== null) {
+      const from = getGradeSortOrder_(scope.GradeFrom);
+      const to = getGradeSortOrder_(scope.GradeTo);
+      gradeOk = from !== null && to !== null && gradeOrder >= from && gradeOrder <= to;
+    } else if (scope.ApplicableGrades) {
+      const grades = String(scope.ApplicableGrades)
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+      gradeOk = grades.includes(String(report.GradeID));
+    }
+
+    const gender = String(scope.Gender || 'All');
+    const genderOk =
+      gender === 'All' ||
+      applicableSections.length === 0 ||
+      applicableSections.some(section => gender === String(section.Gender || ''));
+
+    const program = String(scope.Program || 'International');
+    const programOk =
+      program === 'All' ||
+      applicableSections.length === 0 ||
+      applicableSections.some(section =>
+        program === String(section.Program || 'International')
+      );
+
+    return gradeOk && genderOk && programOk;
+  });
+}
+
+// -----------------------------------------------------------------------------
+// 13. SHEET WRITE HELPERS
+// -----------------------------------------------------------------------------
+
+function appendObjectRow_(sh, headers, obj) {
+  const row = headers.map(h => normalizeForSheet_(obj[h]));
+  sh.appendRow(row);
+}
+
+function updateObjectRow_(sh, headers, rowNumber, patch) {
+  const range = sh.getRange(rowNumber, 1, 1, headers.length);
+  const row = range.getValues()[0];
+
+  Object.keys(patch).forEach(key => {
+    const idx = headers.indexOf(key);
+    if (idx >= 0) row[idx] = normalizeForSheet_(patch[key]);
+  });
+
+  range.setValues([row]);
+}
+
+function normalizeForSheet_(value) {
+  if (value === undefined || value === null) return '';
+  return value;
+}
+
+// -----------------------------------------------------------------------------
+// 14. ID / DATE / STRING HELPERS
+// -----------------------------------------------------------------------------
+
+function makePiReportId_(academicYearId, weekId, gradeId, subjectId, sectionMode, sections) {
+  const mode = String(sectionMode || 'ALL').toUpperCase();
+  const scopeKey = mode === 'ALL'
+    ? 'ALL'
+    : `SEL_${String(sections || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .sort()
+        .join('-')}`;
+
+  return sanitizeId_(
+    `PI_${shortAcademicYear_(academicYearId)}_${weekId}_${gradeId}_${subjectId}_${scopeKey}`
+  );
+}
+
+function makeDailyReportId_(academicYearId, date, sectionId, periodNumber, subjectId) {
+  return sanitizeId_(
+    `DR_${shortAcademicYear_(academicYearId)}_${String(date).replace(/-/g, '')}_${sectionId}_P${periodNumber}_${subjectId}`
+  );
+}
+
+function shortAcademicYear_(academicYearId) {
+  const m = String(academicYearId || '').match(/^AY20(\d{2})_/);
+  return m ? `AY${m[1]}` : String(academicYearId || '');
+}
+
+function makeId_(prefix) {
+  const stamp = Utilities.formatDate(new Date(), CONFIG.TIME_ZONE, 'yyyyMMddHHmmssSSS');
+  const random = Math.floor(Math.random() * 9000 + 1000);
+  return `${prefix}_${stamp}_${random}`;
+}
+
+function sanitizeId_(s) {
+  return String(s || '')
+    .replace(/\s+/g, '_')
+    .replace(/[^A-Za-z0-9_\-]/g, '')
+    .replace(/_+/g, '_');
+}
+
+function sanitizeFileName_(s) {
+  return String(s || '')
+    .replace(/[\\/:*?"<>|#%{}[\]]/g, '-')
+    .replace(/\s+/g, '_')
+    .substring(0, 180);
+}
+
+function nowIso_() {
+  return Utilities.formatDate(new Date(), CONFIG.TIME_ZONE, "yyyy-MM-dd'T'HH:mm:ss");
+}
+
+function normalizeDate_(value) {
+  if (!value) return '';
+  if (Object.prototype.toString.call(value) === '[object Date]') {
+    return Utilities.formatDate(value, CONFIG.TIME_ZONE, 'yyyy-MM-dd');
+  }
+
+  const str = String(value).trim();
+  const m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+
+  const date = new Date(value);
+  if (isNaN(date.getTime())) throw new Error(`Invalid date: ${value}`);
+  return Utilities.formatDate(date, CONFIG.TIME_ZONE, 'yyyy-MM-dd');
+}
+
+function formatDateDisplay_(value) {
+  if (!value) return '';
+  const d = new Date(`${normalizeDate_(value)}T00:00:00`);
+  return Utilities.formatDate(d, CONFIG.TIME_ZONE, 'dd MMM yyyy');
+}
+
+function normalizeEmail_(email) {
+  return String(email || '').trim().toLowerCase();
+}
+
+function normalizeReportType_(type) {
+  const t = String(type || '').trim().toUpperCase();
+  if (['PI','PERFORMANCEINDICATOR','PERFORMANCE_INDICATOR'].includes(t)) return 'PI';
+  if (['DAILY','DAILYREPORT','DAILY_REPORT'].includes(t)) return 'DAILY';
+  throw new Error(`Invalid report type: ${type}`);
+}
+
+function isTrue_(value) {
+  return value === true || String(value).trim().toUpperCase() === 'TRUE';
+}
+
+function isTrueOrBlank_(value) {
+  return value === '' || value === null || value === undefined || isTrue_(value);
+}
+
+function compactJson_(obj) {
+  return JSON.stringify(stripInternalFields_(obj));
+}
+
+function stripInternalFields_(obj) {
+  const clean = {};
+  Object.keys(obj || {}).forEach(k => {
+    if (!k.startsWith('_')) clean[k] = obj[k];
+  });
+  return clean;
+}
+
+function truncate_(value, max) {
+  const s = String(value || '');
+  return s.length > max ? s.substring(0, max) + '…' : s;
+}
+
+function safeError_(err) {
+  if (!err) return 'Unknown error.';
+  return err.message || String(err);
+}
+
+
+// -----------------------------------------------------------------------------
+// 15. ASC TIMETABLE MULTI-FILE IMPORTER
+// -----------------------------------------------------------------------------
+
+const MASTER_TIMETABLE_HEADERS = Object.freeze({
+  TimetableVersions: [
+    'TimetableVersionID','AcademicYearID','ScopeName','GradeFrom','GradeTo',
+    'Gender','Program','ApplicableSections','VersionNumber','EffectiveFrom','EffectiveUntil',
+    'Status','Active'
+  ],
+  TimetableEntries: [
+    'TimetableEntryID','TimetableVersionID','GradeID','SectionID','DayOfWeek',
+    'PeriodNumber','SubjectID','EmployeeID','AdditionalEmployeeIDs',
+    'StartTime','EndTime','DailyReportRequired','SourceFileName',
+    'ImportBatchID','Active'
+  ],
+  TimetableImportMap: [
+    'MapID','MapType','SourceValue','TargetID','TargetName','Active'
+  ]
+});
+
+function validateTimetableMasterStructure_() {
+  const ss = getMasterSS_();
+  const checked = [];
+
+  Object.keys(MASTER_TIMETABLE_HEADERS).forEach(name => {
+    const sh = ss.getSheetByName(name);
+    if (!sh) {
+      throw new Error(`Master Data tab "${name}" was not found.`);
+    }
+
+    const expected = MASTER_TIMETABLE_HEADERS[name];
+    const actual = sh.getRange(1, 1, 1, expected.length).getDisplayValues()[0]
+      .map(v => String(v).trim());
+
+    const mismatch = expected.some((h, i) => actual[i] !== h);
+    if (mismatch) {
+      throw new Error(
+        `Header mismatch in Master Data "${name}". Expected: ${expected.join(' | ')}`
+      );
+    }
+
+    checked.push(name);
+  });
+
+  return checked;
+}
+
+function getOrCreateAscImportFolders_() {
+  const props = PropertiesService.getScriptProperties();
+
+  let root = getFolderFromPropertyOrName_(
+    'ASC_IMPORT_ROOT_FOLDER_ID',
+    CONFIG.ASC_IMPORT_ROOT_FOLDER_NAME
+  );
+
+  let pending = getChildFolderFromPropertyOrCreate_(
+    root,
+    'ASC_IMPORT_PENDING_FOLDER_ID',
+    CONFIG.ASC_IMPORT_PENDING_FOLDER_NAME
+  );
+
+  let processed = getChildFolderFromPropertyOrCreate_(
+    root,
+    'ASC_IMPORT_PROCESSED_FOLDER_ID',
+    CONFIG.ASC_IMPORT_PROCESSED_FOLDER_NAME
+  );
+
+  return { root, pending, processed };
+}
+
+function getFolderFromPropertyOrName_(propertyName, folderName) {
+  const props = PropertiesService.getScriptProperties();
+  const savedId = props.getProperty(propertyName);
+
+  if (savedId) {
+    try {
+      return DriveApp.getFolderById(savedId);
+    } catch (_) {}
+  }
+
+  const folders = DriveApp.getFoldersByName(folderName);
+  const folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+  props.setProperty(propertyName, folder.getId());
+  return folder;
+}
+
+function getChildFolderFromPropertyOrCreate_(parent, propertyName, folderName) {
+  const props = PropertiesService.getScriptProperties();
+  const savedId = props.getProperty(propertyName);
+
+  if (savedId) {
+    try {
+      return DriveApp.getFolderById(savedId);
+    } catch (_) {}
+  }
+
+  const matches = parent.getFoldersByName(folderName);
+  const folder = matches.hasNext() ? matches.next() : parent.createFolder(folderName);
+  props.setProperty(propertyName, folder.getId());
+  return folder;
+}
+
+function getTimetableImportFolderInfo_() {
+  const user = requireCurrentEmployee_();
+  if (!canManageTimetables_(user.employee.EmployeeID)) {
+    throw new Error('You do not have permission to manage timetables.');
+  }
+
+  const folders = getOrCreateAscImportFolders_();
+  return {
+    rootFolderId: folders.root.getId(),
+    pendingFolderId: folders.pending.getId(),
+    pendingFolderName: folders.pending.getName(),
+    pendingFolderUrl: `https://drive.google.com/drive/folders/${folders.pending.getId()}`,
+    processedFolderId: folders.processed.getId(),
+    processedFolderUrl: `https://drive.google.com/drive/folders/${folders.processed.getId()}`
+  };
+}
+
+function getTimetableVersionsForAdmin_() {
+  const user = requireCurrentEmployee_();
+  if (!canManageTimetables_(user.employee.EmployeeID)) {
+    throw new Error('You do not have permission to manage timetables.');
+  }
+
+  return readMasterTable_('TimetableVersions')
+    .filter(r => r.Active === '' || isTrue_(r.Active))
+    .map(stripInternalFields_);
+}
+
+/**
+ * Main multi-file importer.
+ *
+ * Workflow:
+ * 1. Upload one or more original aSc .xlsx/.xls files into the Pending folder.
+ * 2. Run this function (or call POST action importAscTimetables).
+ * 3. The importer converts each Excel file temporarily to Google Sheets,
+ *    reads all class tabs, maps classes/subjects/teachers to Master Data IDs,
+ *    detects duplicates/conflicts, and writes validated rows to TimetableEntries.
+ *
+ * body.effectiveDate is optional (YYYY-MM-DD). If omitted, today is used.
+ * This date determines which scoped TimetableVersion is applicable.
+ */
+function importAscTimetablesFromDrive_(body) {
+  const user = requireCurrentEmployee_();
+  if (!canManageTimetables_(user.employee.EmployeeID)) {
+    throw new Error('You do not have permission to import timetables.');
+  }
+
+  validateTimetableMasterStructure_();
+
+  const effectiveDate = normalizeDate_(
+    (body && (body.effectiveDate || body.EffectiveDate)) || new Date()
+  );
+
+  const folders = getOrCreateAscImportFolders_();
+  const files = folders.pending.getFiles();
+  const candidates = [];
+
+  while (files.hasNext()) {
+    const file = files.next();
+    const name = String(file.getName() || '');
+    const mime = String(file.getMimeType() || '');
+
+    if (
+      /\.(xlsx|xls)$/i.test(name) ||
+      mime === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      mime === 'application/vnd.ms-excel'
+    ) {
+      candidates.push(file);
+    }
+  }
+
+  if (!candidates.length) {
+    return {
+      success: true,
+      message: 'No Excel timetable files were found in the Pending import folder.',
+      effectiveDate,
+      pendingFolderUrl: `https://drive.google.com/drive/folders/${folders.pending.getId()}`,
+      filesProcessed: 0,
+      rowsImported: 0
+    };
+  }
+
+  const batchId = makeId_('TTIMP');
+  const context = buildTimetableImportContext_(effectiveDate);
+  const summary = {
+    success: true,
+    batchId,
+    effectiveDate,
+    pendingFolderUrl: `https://drive.google.com/drive/folders/${folders.pending.getId()}`,
+    filesFound: candidates.length,
+    filesProcessed: 0,
+    filesMovedToProcessed: 0,
+    rowsParsed: 0,
+    rowsImported: 0,
+    duplicatesSkipped: 0,
+    conflicts: [],
+    unresolvedSections: [],
+    unresolvedSubjects: [],
+    unresolvedTeachers: [],
+    warnings: [],
+    fileResults: []
+  };
+
+  candidates.forEach(file => {
+    const fileResult = importOneAscTimetableFile_(
+      file,
+      batchId,
+      effectiveDate,
+      context,
+      summary
+    );
+    summary.fileResults.push(fileResult);
+    summary.filesProcessed++;
+
+    if (
+      fileResult.conflicts === 0 &&
+      fileResult.unresolvedSections === 0 &&
+      fileResult.unresolvedSubjects === 0 &&
+      fileResult.unresolvedTeachers === 0
+    ) {
+      try {
+        file.moveTo(folders.processed);
+        summary.filesMovedToProcessed++;
+      } catch (moveErr) {
+        summary.warnings.push(
+          `${file.getName()}: imported successfully, but could not be moved to Processed (${safeError_(moveErr)}).`
+        );
+      }
+    }
+  });
+
+  summary.unresolvedSections = [...new Set(summary.unresolvedSections)];
+  summary.unresolvedSubjects = [...new Set(summary.unresolvedSubjects)];
+  summary.unresolvedTeachers = [...new Set(summary.unresolvedTeachers)];
+
+  audit_({
+    actionType: 'TIMETABLE_IMPORT',
+    module: 'Timetable',
+    recordId: batchId,
+    description: `aSc timetable import completed: ${summary.rowsImported} rows imported from ${summary.filesProcessed} file(s).`,
+    oldValue: '',
+    newValue: compactJson_({
+      effectiveDate,
+      filesProcessed: summary.filesProcessed,
+      rowsImported: summary.rowsImported,
+      duplicatesSkipped: summary.duplicatesSkipped,
+      conflictCount: summary.conflicts.length,
+      unresolvedSections: summary.unresolvedSections,
+      unresolvedSubjects: summary.unresolvedSubjects,
+      unresolvedTeachers: summary.unresolvedTeachers
+    }),
+    success: summary.conflicts.length === 0,
+    user
+  });
+
+  return summary;
+}
+
+/**
+ * Manual wrapper for Apps Script editor.
+ * You can run this after uploading files to Pending.
+ */
+function importAscTimetables() {
+  const result = importAscTimetablesFromDrive_({});
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
+}
+
+/**
+ * Optional manual wrapper when importing a timetable intended to become
+ * effective on a specific date.
+ *
+ * Example:
+ * importAscTimetablesForDate('2026-08-23')
+ */
+function importAscTimetablesForDate(effectiveDate) {
+  const result = importAscTimetablesFromDrive_({ effectiveDate });
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
+}
+
+function importOneAscTimetableFile_(file, batchId, effectiveDate, context, summary) {
+  const result = {
+    fileName: file.getName(),
+    rowsParsed: 0,
+    rowsImported: 0,
+    duplicatesSkipped: 0,
+    conflicts: 0,
+    unresolvedSections: 0,
+    unresolvedSubjects: 0,
+    unresolvedTeachers: 0,
+    sheetsRead: 0
+  };
+
+  let tempId = '';
+
+  try {
+    const converted = convertExcelToTemporaryGoogleSheet_(file);
+    tempId = converted.id;
+    const tempSS = SpreadsheetApp.openById(tempId);
+
+    // Determine the scope represented by this source file from its actual class tabs.
+    // This removes the need to create TimetableVersions manually.
+    const fileScope = resolveAscFileScope_(tempSS, file.getName(), context, summary, result);
+    if (!fileScope || !fileScope.sections.length) {
+      throw new Error(`No resolvable class/section tabs were found in ${file.getName()}.`);
+    }
+
+    const version = resolveOrCreateTimetableVersionForImport_(
+      fileScope,
+      effectiveDate,
+      context
+    );
+
+    result.timetableVersionId = version.TimetableVersionID;
+    result.scopeName = version.ScopeName;
+    result.versionNumber = Number(version.VersionNumber) || 1;
+
+    tempSS.getSheets().forEach(classSheet => {
+      const parsed = parseAscClassSheet_(
+        classSheet,
+        file.getName(),
+        batchId,
+        effectiveDate,
+        context,
+        summary,
+        result,
+        version
+      );
+
+      result.sheetsRead++;
+      result.rowsParsed += parsed.length;
+      summary.rowsParsed += parsed.length;
+
+      parsed.forEach(record => {
+        const outcome = storeTimetableEntry_(record, context, summary);
+
+        if (outcome === 'IMPORTED') {
+          result.rowsImported++;
+          summary.rowsImported++;
+        } else if (outcome === 'DUPLICATE') {
+          result.duplicatesSkipped++;
+          summary.duplicatesSkipped++;
+        } else if (outcome === 'CONFLICT') {
+          result.conflicts++;
+        }
+      });
+    });
+
+    return result;
+  } catch (err) {
+    result.error = safeError_(err);
+    summary.warnings.push(`${file.getName()}: ${result.error}`);
+    return result;
+  } finally {
+    if (tempId) {
+      try {
+        DriveApp.getFileById(tempId).setTrashed(true);
+      } catch (_) {}
+    }
+  }
+}
+
+
+/**
+ * Reads only the class tabs from an aSc workbook and resolves them against
+ * Master Data Sections. The exact set of sections becomes the timetable scope.
+ * This supports arbitrary principal/building/gender splits without hard-coding.
+ */
+function resolveAscFileScope_(tempSS, sourceFileName, context, summary, fileResult) {
+  const sections = [];
+  const seen = new Set();
+
+  tempSS.getSheets().forEach(sh => {
+    const data = sh.getDataRange().getDisplayValues();
+    if (!data.length || !findAscDayHeader_(data)) return;
+
+    const sourceSectionName = String(
+      (data[0] && data[0][0]) || sh.getName() || ''
+    ).trim() || sh.getName();
+
+    const section = resolveTimetableSection_(sourceSectionName, context, summary);
+    if (!section) {
+      fileResult.unresolvedSections++;
+      summary.unresolvedSections.push(sourceSectionName);
+      ensureTimetableImportMapStub_('Section', sourceSectionName, context);
+      return;
+    }
+
+    if (!seen.has(String(section.SectionID))) {
+      seen.add(String(section.SectionID));
+      sections.push(section);
+    }
+  });
+
+  if (!sections.length) return null;
+
+  const orders = sections
+    .map(sec => ({ sec, order: gradeOrderFromIdWithContext_(sec.GradeID, context) }))
+    .filter(x => x.order !== null)
+    .sort((a,b) => a.order - b.order);
+
+  if (!orders.length) return null;
+
+  const gradeFrom = orders[0].sec.GradeID;
+  const gradeTo = orders[orders.length - 1].sec.GradeID;
+
+  const genders = [...new Set(sections.map(s => String(s.Gender || '')).filter(Boolean))];
+  const programs = [...new Set(sections.map(s => String(s.Program || 'International')).filter(Boolean))];
+
+  const gender = genders.length === 1 ? genders[0] : 'All';
+  const program = programs.length === 1 ? programs[0] : 'International';
+  const applicableSections = sections.map(s => String(s.SectionID)).sort();
+
+  const sourceBase = String(sourceFileName || 'Timetable')
+    .replace(/\.(xlsx|xls)$/i,'')
+    .replace(/[_-]+/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+
+  return {
+    sourceFileName,
+    scopeName: sourceBase || `${gradeFrom}-${gradeTo} ${gender}`,
+    gradeFrom,
+    gradeTo,
+    gender,
+    program,
+    applicableSections,
+    sections
+  };
+}
+
+/**
+ * Creates the first timetable version for a file scope automatically.
+ * If the same exact section scope is imported again with a later effective
+ * date, the current version is closed and the next V-number is created.
+ * If the section composition changes, the new version can overlap the old
+ * scope; section/date resolution will prefer the newer, explicit scope.
+ */
+function resolveOrCreateTimetableVersionForImport_(fileScope, effectiveDate, context) {
+  const ss = getMasterSS_();
+  const sh = ss.getSheetByName('TimetableVersions');
+  if (!sh) throw new Error('Master Data tab "TimetableVersions" was not found.');
+
+  const targetSections = normalizeSectionSet_(fileScope.applicableSections);
+  const date = normalizeDate_(effectiveDate);
+
+  const sameScope = context.timetableVersions
+    .filter(v => String(v.AcademicYearID) === CONFIG.ACADEMIC_YEAR_ID)
+    .filter(v => normalizeSectionSet_(v.ApplicableSections) === targetSections)
+    .sort((a,b) => {
+      const av = Number(a.VersionNumber) || 0;
+      const bv = Number(b.VersionNumber) || 0;
+      if (av !== bv) return bv-av;
+      return String(b.EffectiveFrom || '').localeCompare(String(a.EffectiveFrom || ''));
+    });
+
+  // Re-running a failed/pending import for the same scope/date must NOT create V2.
+  const sameDate = sameScope.find(v => normalizeDateSafe_(v.EffectiveFrom) === date);
+  if (sameDate) return sameDate;
+
+  const latest = sameScope.length ? sameScope[0] : null;
+  const nextVersion = latest ? (Number(latest.VersionNumber) || 0) + 1 : 1;
+
+  if (latest && (latest.Active === '' || isTrue_(latest.Active))) {
+    const previousDay = addDaysToIsoDate_(date, -1);
+    updateObjectRow_(sh, MASTER_TIMETABLE_HEADERS.TimetableVersions, latest._row, {
+      EffectiveUntil: previousDay,
+      Status: 'Historical',
+      Active: false
+    });
+    latest.EffectiveUntil = previousDay;
+    latest.Status = 'Historical';
+    latest.Active = false;
+  }
+
+  const timetableVersionId = makeTimetableVersionId_(
+    fileScope.gradeFrom,
+    fileScope.gradeTo,
+    fileScope.gender,
+    nextVersion,
+    fileScope.scopeName
+  );
+
+  const record = {
+    TimetableVersionID: timetableVersionId,
+    AcademicYearID: CONFIG.ACADEMIC_YEAR_ID,
+    ScopeName: fileScope.scopeName,
+    GradeFrom: fileScope.gradeFrom,
+    GradeTo: fileScope.gradeTo,
+    Gender: fileScope.gender,
+    Program: fileScope.program,
+    ApplicableSections: targetSections,
+    VersionNumber: nextVersion,
+    EffectiveFrom: date,
+    EffectiveUntil: '',
+    Status: 'Active',
+    Active: true
+  };
+
+  appendObjectRow_(sh, MASTER_TIMETABLE_HEADERS.TimetableVersions, record);
+  const stored = { ...record, _row: sh.getLastRow() };
+  context.timetableVersions.push(stored);
+  return stored;
+}
+
+function normalizeSectionSet_(value) {
+  if (Array.isArray(value)) {
+    return value.map(String).map(s => s.trim()).filter(Boolean).sort().join(',');
+  }
+  const raw = String(value || '').trim();
+  if (!raw || raw.toUpperCase() === 'ALL') return raw.toUpperCase() === 'ALL' ? 'ALL' : '';
+  return raw.split(',').map(s => s.trim()).filter(Boolean).sort().join(',');
+}
+
+function normalizeDateSafe_(value) {
+  try { return value ? normalizeDate_(value) : ''; }
+  catch (_) { return ''; }
+}
+
+function addDaysToIsoDate_(isoDate, days) {
+  const d = new Date(`${normalizeDate_(isoDate)}T12:00:00`);
+  d.setDate(d.getDate() + Number(days || 0));
+  return Utilities.formatDate(d, CONFIG.TIME_ZONE, 'yyyy-MM-dd');
+}
+
+function makeTimetableVersionId_(gradeFrom, gradeTo, gender, versionNumber, scopeName) {
+  const gf = String(gradeFrom || '').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+  const gt = String(gradeTo || '').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+  const g = String(gender || 'ALL').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+  const range = gf === gt ? gf : `${gf}${gt}`;
+  const shortYear = shortAcademicYear_(CONFIG.ACADEMIC_YEAR_ID);
+  const base = `TT_${shortYear}_${range}_${g}_V${Number(versionNumber) || 1}`;
+
+  // If another scope with the same grade/gender/version already exists, add
+  // a compact scope suffix to keep the ID unique.
+  const existing = readMasterTable_('TimetableVersions')
+    .some(v => String(v.TimetableVersionID) === base);
+  if (!existing) return base;
+
+  const suffix = sanitizeId_(String(scopeName || 'SCOPE')).substring(0, 18).toUpperCase();
+  return `${base}_${suffix}`;
+}
+
+function convertExcelToTemporaryGoogleSheet_(file) {
+  const sourceBlob = file.getBlob();
+  const sourceMime = sourceBlob.getContentType() ||
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  const boundary = 'ars_import_' + new Date().getTime();
+  const tempName = `TEMP_ASC_${new Date().getTime()}_${file.getName()}`;
+
+  const metadata = JSON.stringify({
+    name: tempName,
+    mimeType: 'application/vnd.google-apps.spreadsheet'
+  });
+
+  const first = Utilities.newBlob(
+    `--${boundary}\r\n` +
+    `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+    `${metadata}\r\n` +
+    `--${boundary}\r\n` +
+    `Content-Type: ${sourceMime}\r\n\r\n`
+  ).getBytes();
+
+  const ending = Utilities.newBlob(`\r\n--${boundary}--`).getBytes();
+  const payload = first.concat(sourceBlob.getBytes(), ending);
+
+  const response = UrlFetchApp.fetch(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType',
+    {
+      method: 'post',
+      contentType: `multipart/related; boundary=${boundary}`,
+      headers: {
+        Authorization: `Bearer ${ScriptApp.getOAuthToken()}`
+      },
+      payload,
+      muteHttpExceptions: true
+    }
+  );
+
+  const code = response.getResponseCode();
+  const text = response.getContentText();
+
+  if (code < 200 || code >= 300) {
+    throw new Error(
+      `Google Drive could not convert "${file.getName()}" to a temporary Google Sheet. HTTP ${code}: ${text}`
+    );
+  }
+
+  const created = JSON.parse(text);
+  if (!created.id) {
+    throw new Error(`Google Drive conversion returned no file ID for "${file.getName()}".`);
+  }
+
+  return created;
+}
+
+function parseAscClassSheet_(
+  sh,
+  sourceFileName,
+  batchId,
+  effectiveDate,
+  context,
+  summary,
+  fileResult,
+  version
+) {
+  const data = sh.getDataRange().getDisplayValues();
+  if (!data.length) return [];
+
+  const headerInfo = findAscDayHeader_(data);
+  if (!headerInfo) {
+    // Ignore non-class/helper sheets instead of treating them as errors.
+    return [];
+  }
+
+  const sourceSectionName = String(
+    (data[0] && data[0][0]) || sh.getName() || ''
+  ).trim() || sh.getName();
+
+  const section = resolveTimetableSection_(
+    sourceSectionName,
+    context,
+    summary
+  );
+
+  if (!section) {
+    fileResult.unresolvedSections++;
+    summary.unresolvedSections.push(sourceSectionName);
+    ensureTimetableImportMapStub_('Section', sourceSectionName, context);
+    return [];
+  }
+
+  const records = [];
+
+  for (let r = headerInfo.rowIndex + 1; r < data.length; r++) {
+    const periodLabel = String(data[r][0] || '').trim();
+    if (!/^period\s*\d+/i.test(periodLabel)) continue;
+
+    const periodMatch = periodLabel.match(/(\d+)/);
+    const periodNumber = periodMatch ? Number(periodMatch[1]) : 0;
+    if (!periodNumber) continue;
+
+    const times = splitAscTimeRange_(String(data[r][1] || '').trim());
+    const teacherRow = r + 1 < data.length ? data[r + 1] : [];
+
+    Object.keys(headerInfo.dayColumns).forEach(dayName => {
+      const c = headerInfo.dayColumns[dayName];
+      const sourceSubject = String(data[r][c] || '').trim();
+      const sourceTeachers = String(teacherRow[c] || '').trim();
+
+      if (!sourceSubject) return;
+
+      const subject = resolveTimetableSubject_(
+        sourceSubject,
+        context,
+        summary
+      );
+
+      if (!subject) {
+        fileResult.unresolvedSubjects++;
+        summary.unresolvedSubjects.push(sourceSubject);
+        ensureTimetableImportMapStub_('Subject', sourceSubject, context);
+        return;
+      }
+
+      const teacherResult = resolveTimetableTeachers_(
+        sourceTeachers,
+        context,
+        summary
+      );
+
+      if (!teacherResult.primaryEmployeeID) {
+        fileResult.unresolvedTeachers++;
+        if (sourceTeachers) {
+          summary.unresolvedTeachers.push(sourceTeachers);
+          sourceTeachers
+            .split(/[,;\n]+/)
+            .map(s => s.trim())
+            .filter(Boolean)
+            .filter(s => !isNonEmployeeAscResource_(s))
+            .forEach(s => ensureTimetableImportMapStub_('Teacher', s, context));
+        }
+        return;
+      }
+
+      const dailyRequiredResult = getDailyReportRequiredForTimetable_(
+        section.GradeID,
+        subject.SubjectID,
+        context
+      );
+
+      if (dailyRequiredResult.warning) {
+        summary.warnings.push(
+          `${sourceFileName} / ${sourceSectionName} / ${dayName} P${periodNumber}: ${dailyRequiredResult.warning}`
+        );
+      }
+
+      const entryId = makeTimetableEntryId_(
+        version.TimetableVersionID,
+        section.SectionID,
+        dayName,
+        periodNumber
+      );
+
+      records.push({
+        TimetableEntryID: entryId,
+        TimetableVersionID: version.TimetableVersionID,
+        GradeID: section.GradeID,
+        SectionID: section.SectionID,
+        DayOfWeek: dayName,
+        PeriodNumber: periodNumber,
+        SubjectID: subject.SubjectID,
+        EmployeeID: teacherResult.primaryEmployeeID,
+        AdditionalEmployeeIDs: teacherResult.additionalEmployeeIDs.join(','),
+        StartTime: times.start,
+        EndTime: times.end,
+        DailyReportRequired: dailyRequiredResult.required,
+        SourceFileName: sourceFileName,
+        ImportBatchID: batchId,
+        Active: true
+      });
+    });
+  }
+
+  return records;
+}
+
+function findAscDayHeader_(data) {
+  const supportedDays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  for (let r = 0; r < Math.min(data.length, 12); r++) {
+    const row = data[r].map(v => String(v || '').trim());
+    const dayColumns = {};
+
+    row.forEach((value, c) => {
+      const day = supportedDays.find(d => d.toLowerCase() === value.toLowerCase());
+      if (day) dayColumns[day] = c;
+    });
+
+    if (Object.keys(dayColumns).length >= 3) {
+      return { rowIndex: r, dayColumns };
+    }
+  }
+
+  return null;
+}
+
+function splitAscTimeRange_(value) {
+  const m = String(value || '').match(
+    /(\d{1,2}:\d{2})\s*[-–—]\s*(\d{1,2}:\d{2})/
+  );
+
+  return {
+    start: m ? normalizeClockTime_(m[1]) : '',
+    end: m ? normalizeClockTime_(m[2]) : ''
+  };
+}
+
+function normalizeClockTime_(value) {
+  const m = String(value || '').trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return String(value || '').trim();
+  return `${String(Number(m[1])).padStart(2, '0')}:${m[2]}`;
+}
+
+function buildTimetableImportContext_(effectiveDate) {
+  const master = getMasterSS_();
+
+  return {
+    master,
+    effectiveDate,
+    sections: readMasterTable_('Sections'),
+    grades: readMasterTable_('Grades'),
+    subjects: readMasterTable_('Subjects'),
+    employees: readMasterTable_('Employees'),
+    subjectGradeMap: readMasterTable_('SubjectGradeMap'),
+    teacherAssignments: readMasterTable_('TeacherAssignments'),
+    timetableVersions: readMasterTable_('TimetableVersions'),
+    timetableEntries: readMasterTable_('TimetableEntries'),
+    importMaps: readMasterTable_('TimetableImportMap'),
+    timetableEntriesSheet: master.getSheetByName('TimetableEntries'),
+    timetableMapSheet: master.getSheetByName('TimetableImportMap')
+  };
+}
+
+function resolveTimetableSection_(sourceValue, context, summary) {
+  const explicit = getTimetableImportMapTarget_('Section', sourceValue, context);
+  if (explicit) {
+    return context.sections.find(r =>
+      String(r.SectionID) === String(explicit)
+    ) || null;
+  }
+
+  const sourceKey = normalizeImportText_(sourceValue);
+
+  const direct = context.sections.find(r => {
+    const values = [
+      r.SectionID, r.SectionCode, r.SectionNameEN, r.SectionNameAR,
+      r.SectionName, r.ClassName, r.DisplayName
+    ].filter(v => v !== undefined && v !== null && v !== '');
+
+    return values.some(v => normalizeImportText_(v) === sourceKey);
+  });
+
+  if (direct) {
+    saveTimetableImportMap_(
+      'Section',
+      sourceValue,
+      direct.SectionID,
+      direct.SectionNameEN || direct.SectionName || direct.SectionID,
+      context
+    );
+    return direct;
+  }
+
+  const parsed = parseAscSectionLabel_(sourceValue);
+  if (!parsed) return null;
+
+  const candidates = context.sections.filter(r =>
+    String(r.GradeID) === parsed.gradeId &&
+    (r.Active === '' || isTrue_(r.Active))
+  );
+
+  const byCode = candidates.filter(r => {
+    const sectionId = String(r.SectionID || '').toUpperCase();
+    const sectionCode = String(r.SectionCode || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const name = normalizeImportText_(
+      r.SectionNameEN || r.SectionName || r.DisplayName || ''
+    );
+
+    return (
+      sectionCode === parsed.sectionCode ||
+      sectionId.endsWith(`_${parsed.sectionCode}`) ||
+      name.endsWith(parsed.sectionCode.toLowerCase()) ||
+      name === normalizeImportText_(sourceValue)
+    );
+  });
+
+  if (byCode.length === 1) {
+    const resolved = byCode[0];
+    saveTimetableImportMap_(
+      'Section',
+      sourceValue,
+      resolved.SectionID,
+      resolved.SectionNameEN || resolved.SectionName || resolved.SectionID,
+      context
+    );
+    return resolved;
+  }
+
+  return null;
+}
+
+function parseAscSectionLabel_(sourceValue) {
+  let s = String(sourceValue || '').toUpperCase().trim();
+  s = s.replace(/\bGRADE\b/g, '').replace(/[^A-Z0-9]/g, '');
+
+  let m = s.match(/^KG([123])([A-Z0-9]+)$/);
+  if (m) {
+    return { gradeId: `KG${m[1]}`, sectionCode: m[2] };
+  }
+
+  m = s.match(/^G?(\d{1,2})([A-Z0-9]+)$/);
+  if (m) {
+    return { gradeId: `G${Number(m[1])}`, sectionCode: m[2] };
+  }
+
+  return null;
+}
+
+function resolveTimetableSubject_(sourceValue, context, summary) {
+  const explicit = getTimetableImportMapTarget_('Subject', sourceValue, context);
+  if (explicit) {
+    return context.subjects.find(r =>
+      String(r.SubjectID) === String(explicit)
+    ) || null;
+  }
+
+  const key = normalizeImportText_(sourceValue);
+
+  const direct = context.subjects.find(r => {
+    const values = [
+      r.SubjectID, r.SubjectCode, r.SubjectNameEN, r.SubjectNameAR
+    ].filter(v => v !== undefined && v !== null && v !== '');
+
+    return values.some(v => normalizeImportText_(v) === key);
+  });
+
+  if (direct) {
+    saveTimetableImportMap_(
+      'Subject',
+      sourceValue,
+      direct.SubjectID,
+      direct.SubjectNameEN || direct.SubjectID,
+      context
+    );
+    return direct;
+  }
+
+  const aliases = {
+    'math': 'MATH',
+    'mathematics': 'MATH',
+    'science': 'SCI',
+    'arabic': 'ARAB',
+    'islamic': 'ISL',
+    'islamicstudies': 'ISL',
+    'saudihistory': 'HIST',
+    'socialstudies': 'SS',
+    'computer': 'ICT',
+    'ict': 'ICT',
+    'stem': 'STEAM',
+    'steam': 'STEAM',
+    'art': 'ART',
+    'pe': 'PE',
+    'physicaleducation': 'PE',
+    'music': 'MUSIC',
+    'french': 'FRE',
+    'activity': 'ACT',
+    'extracourses': 'ELECT',
+    'electivecourse': 'ELECT',
+    'english': 'ENG',
+    'englishlanguage1': 'ENG',
+    'englishlanguage2': 'ENG',
+    'chemistry': 'CHEM',
+    'physics': 'PHYS',
+    'biology': 'BIO',
+    'gatquantitativesatmath': 'GAT_MATH',
+    'gatverballysatenglish': 'GAT_ENG',
+    'gatverbalsatenglish': 'GAT_ENG',
+    'saatmath': 'SAAT_MATH',
+    'saatphysics': 'SAAT_PHY',
+    'saatbiology': 'SAAT_BIO',
+    'saatchemistry': 'SAAT_CHEM'
+  };
+
+  const targetId = aliases[key];
+  if (!targetId) return null;
+
+  const resolved = context.subjects.find(r =>
+    String(r.SubjectID) === targetId ||
+    String(r.SubjectCode) === targetId
+  );
+
+  if (resolved) {
+    saveTimetableImportMap_(
+      'Subject',
+      sourceValue,
+      resolved.SubjectID,
+      resolved.SubjectNameEN || resolved.SubjectID,
+      context
+    );
+  }
+
+  return resolved || null;
+}
+
+function resolveTimetableTeachers_(sourceValue, context, summary) {
+  const tokens = String(sourceValue || '')
+    .split(/[,;\n]+/)
+    .map(s => s.trim())
+    .filter(Boolean)
+    .filter(s => !isNonEmployeeAscResource_(s));
+
+  const resolvedIds = [];
+  const unresolved = [];
+
+  tokens.forEach(token => {
+    const explicit = getTimetableImportMapTarget_('Teacher', token, context);
+    if (explicit) {
+      const emp = context.employees.find(r =>
+        String(r.EmployeeID) === String(explicit)
+      );
+      if (emp) {
+        resolvedIds.push(emp.EmployeeID);
+        return;
+      }
+    }
+
+    const key = normalizePersonName_(token);
+    const matches = context.employees.filter(r =>
+      normalizePersonName_(r.EmployeeNameEN) === key &&
+      (r.Active === '' || isTrue_(r.Active))
+    );
+
+    if (matches.length === 1) {
+      const emp = matches[0];
+      resolvedIds.push(emp.EmployeeID);
+      saveTimetableImportMap_(
+        'Teacher',
+        token,
+        emp.EmployeeID,
+        emp.EmployeeNameEN || emp.EmployeeID,
+        context
+      );
+    } else {
+      unresolved.push(token);
+      ensureTimetableImportMapStub_('Teacher', token, context);
+    }
+  });
+
+  unresolved.forEach(v => summary.unresolvedTeachers.push(v));
+
+  const unique = [...new Set(resolvedIds.map(String))];
+
+  return {
+    primaryEmployeeID: unique[0] || '',
+    additionalEmployeeIDs: unique.slice(1),
+    unresolved
+  };
+}
+
+function isNonEmployeeAscResource_(value) {
+  const s = String(value || '').trim();
+
+  return (
+    !s ||
+    /^[A-Z]$/i.test(s) ||
+    /^ACTIVITY[-_\s]/i.test(s) ||
+    /^ROOM[-_\s]/i.test(s) ||
+    /^RESOURCE[-_\s]/i.test(s)
+  );
+}
+
+function getTimetableImportMapTarget_(mapType, sourceValue, context) {
+  const key = normalizeImportText_(sourceValue);
+
+  const row = context.importMaps.find(r =>
+    String(r.MapType || '').toLowerCase() === String(mapType).toLowerCase() &&
+    normalizeImportText_(r.SourceValue) === key &&
+    (r.Active === '' || isTrue_(r.Active)) &&
+    String(r.TargetID || '').trim() !== ''
+  );
+
+  return row ? String(row.TargetID).trim() : '';
+}
+
+function saveTimetableImportMap_(
+  mapType,
+  sourceValue,
+  targetId,
+  targetName,
+  context
+) {
+  const sourceKey = normalizeImportText_(sourceValue);
+  const existing = context.importMaps.find(r =>
+    String(r.MapType || '').toLowerCase() === String(mapType).toLowerCase() &&
+    normalizeImportText_(r.SourceValue) === sourceKey
+  );
+
+  if (existing) {
+    if (
+      !String(existing.TargetID || '').trim() &&
+      existing._row
+    ) {
+      const headers = MASTER_TIMETABLE_HEADERS.TimetableImportMap;
+      updateObjectRow_(
+        context.timetableMapSheet,
+        headers,
+        existing._row,
+        {
+          TargetID: targetId,
+          TargetName: targetName || '',
+          Active: true
+        }
+      );
+      existing.TargetID = targetId;
+      existing.TargetName = targetName || '';
+      existing.Active = true;
+    }
+    return existing;
+  }
+
+  const record = {
+    MapID: makeId_('MAP'),
+    MapType: mapType,
+    SourceValue: sourceValue,
+    TargetID: targetId,
+    TargetName: targetName || '',
+    Active: true
+  };
+
+  appendObjectRow_(
+    context.timetableMapSheet,
+    MASTER_TIMETABLE_HEADERS.TimetableImportMap,
+    record
+  );
+
+  context.importMaps.push({
+    ...record,
+    _row: context.timetableMapSheet.getLastRow()
+  });
+
+  return record;
+}
+
+function ensureTimetableImportMapStub_(mapType, sourceValue, context) {
+  if (!String(sourceValue || '').trim()) return;
+
+  const sourceKey = normalizeImportText_(sourceValue);
+  const exists = context.importMaps.some(r =>
+    String(r.MapType || '').toLowerCase() === String(mapType).toLowerCase() &&
+    normalizeImportText_(r.SourceValue) === sourceKey
+  );
+
+  if (exists) return;
+
+  const record = {
+    MapID: makeId_('MAP'),
+    MapType: mapType,
+    SourceValue: sourceValue,
+    TargetID: '',
+    TargetName: '',
+    Active: true
+  };
+
+  appendObjectRow_(
+    context.timetableMapSheet,
+    MASTER_TIMETABLE_HEADERS.TimetableImportMap,
+    record
+  );
+
+  context.importMaps.push({
+    ...record,
+    _row: context.timetableMapSheet.getLastRow()
+  });
+}
+
+function resolveTimetableVersionForSection_(
+  section,
+  effectiveDate,
+  context
+) {
+  const gradeOrder = gradeOrderFromIdWithContext_(
+    section.GradeID,
+    context
+  );
+
+  if (gradeOrder === null) return null;
+
+  const date = normalizeDate_(effectiveDate);
+
+  const candidates = context.timetableVersions
+    .filter(v => {
+      if (String(v.AcademicYearID) !== CONFIG.ACADEMIC_YEAR_ID) return false;
+      if (!(v.Active === '' || isTrue_(v.Active))) return false;
+
+      const status = String(v.Status || 'Active').toLowerCase();
+      if (['inactive','archived','closed'].includes(status)) return false;
+
+      const fromOrder = gradeOrderFromIdWithContext_(v.GradeFrom, context);
+      const toOrder = gradeOrderFromIdWithContext_(v.GradeTo, context);
+      if (fromOrder === null || toOrder === null) return false;
+      if (gradeOrder < fromOrder || gradeOrder > toOrder) return false;
+
+      const scopeGender = String(v.Gender || 'All').toLowerCase();
+      const sectionGender = String(section.Gender || '').toLowerCase();
+      if (
+        scopeGender !== 'all' &&
+        scopeGender !== sectionGender
+      ) return false;
+
+      const scopeProgram = String(v.Program || 'International').toLowerCase();
+      const sectionProgram = String(section.Program || 'International').toLowerCase();
+      if (
+        scopeProgram !== 'all' &&
+        scopeProgram !== sectionProgram
+      ) return false;
+
+      const applicable = String(v.ApplicableSections || '').trim();
+      if (applicable && applicable.toUpperCase() !== 'ALL') {
+        const ids = applicable.split(',').map(x => x.trim()).filter(Boolean);
+        if (!ids.includes(String(section.SectionID))) return false;
+      }
+
+      if (v.EffectiveFrom) {
+        const fromDate = normalizeDate_(v.EffectiveFrom);
+        if (date < fromDate) return false;
+      }
+
+      if (v.EffectiveUntil) {
+        const untilDate = normalizeDate_(v.EffectiveUntil);
+        if (date > untilDate) return false;
+      }
+
+      return true;
+    })
+    .map(v => {
+      const fromOrder = gradeOrderFromIdWithContext_(v.GradeFrom, context);
+      const toOrder = gradeOrderFromIdWithContext_(v.GradeTo, context);
+      const exactGender =
+        String(v.Gender || 'All').toLowerCase() ===
+        String(section.Gender || '').toLowerCase();
+
+      const applicable = String(v.ApplicableSections || '').trim();
+      const explicitSections = applicable && applicable.toUpperCase() !== 'ALL' ? 1 : 0;
+
+      return {
+        row: v,
+        span: Math.abs(toOrder - fromOrder),
+        exactGender: exactGender ? 1 : 0,
+        explicitSections,
+        effectiveFrom: normalizeDateSafe_(v.EffectiveFrom),
+        versionNumber: Number(v.VersionNumber) || 0
+      };
+    })
+    .sort((a, b) =>
+      (b.explicitSections - a.explicitSections) ||
+      String(b.effectiveFrom || '').localeCompare(String(a.effectiveFrom || '')) ||
+      (b.exactGender - a.exactGender) ||
+      (a.span - b.span) ||
+      (b.versionNumber - a.versionNumber)
+    );
+
+  return candidates.length ? candidates[0].row : null;
+}
+
+function gradeOrderFromIdWithContext_(gradeId, context) {
+  const id = String(gradeId || '').trim();
+  if (!id) return null;
+
+  const row = context.grades.find(r =>
+    String(r.GradeID) === id
+  );
+
+  if (row && row.SortOrder !== '' && row.SortOrder !== undefined) {
+    const n = Number(row.SortOrder);
+    if (!Number.isNaN(n)) return n;
+  }
+
+  const kg = id.match(/^KG(\d+)$/i);
+  if (kg) return Number(kg[1]);
+
+  const g = id.match(/^G(\d+)$/i);
+  if (g) return 100 + Number(g[1]);
+
+  return null;
+}
+
+function getDailyReportRequiredForTimetable_(
+  gradeId,
+  subjectId,
+  context
+) {
+  const row = context.subjectGradeMap.find(r =>
+    String(r.AcademicYearID) === CONFIG.ACADEMIC_YEAR_ID &&
+    String(r.GradeID) === String(gradeId) &&
+    String(r.SubjectID) === String(subjectId) &&
+    (r.Active === '' || isTrue_(r.Active)) &&
+    (r.Applicable === '' || isTrue_(r.Applicable))
+  );
+
+  if (!row) {
+    return {
+      required: true,
+      warning: `No SubjectGradeMap record found for ${gradeId}/${subjectId}; DailyReportRequired defaulted to TRUE.`
+    };
+  }
+
+  return {
+    required: isTrue_(row.DailyReportRequired),
+    warning: ''
+  };
+}
+
+function storeTimetableEntry_(record, context, summary) {
+  const key = timetableSlotKey_(record);
+  const existing = context.timetableEntries.find(r =>
+    isTrueOrBlank_(r.Active) &&
+    timetableSlotKey_(r) === key
+  );
+
+  if (existing) {
+    if (sameTimetableEntry_(existing, record)) {
+      return 'DUPLICATE';
+    }
+
+    summary.conflicts.push({
+      timetableVersionId: record.TimetableVersionID,
+      sectionId: record.SectionID,
+      dayOfWeek: record.DayOfWeek,
+      periodNumber: record.PeriodNumber,
+      existing: stripInternalFields_(existing),
+      incoming: record
+    });
+
+    return 'CONFLICT';
+  }
+
+  appendObjectRow_(
+    context.timetableEntriesSheet,
+    MASTER_TIMETABLE_HEADERS.TimetableEntries,
+    record
+  );
+
+  context.timetableEntries.push({
+    ...record,
+    _row: context.timetableEntriesSheet.getLastRow()
+  });
+
+  return 'IMPORTED';
+}
+
+function timetableSlotKey_(r) {
+  return [
+    String(r.TimetableVersionID || ''),
+    String(r.SectionID || ''),
+    String(r.DayOfWeek || '').toLowerCase(),
+    Number(r.PeriodNumber) || 0
+  ].join('|');
+}
+
+function sameTimetableEntry_(a, b) {
+  const fields = [
+    'SubjectID','EmployeeID','AdditionalEmployeeIDs',
+    'StartTime','EndTime','DailyReportRequired'
+  ];
+
+  return fields.every(field => {
+    if (field === 'DailyReportRequired') {
+      return isTrue_(a[field]) === isTrue_(b[field]);
+    }
+
+    return String(a[field] || '').trim() === String(b[field] || '').trim();
+  });
+}
+
+function makeTimetableEntryId_(
+  timetableVersionId,
+  sectionId,
+  dayOfWeek,
+  periodNumber
+) {
+  const day = String(dayOfWeek || '').substring(0, 3).toUpperCase();
+  return sanitizeId_(
+    `TTE_${timetableVersionId}_${sectionId}_${day}_P${periodNumber}`
+  );
+}
+
+function normalizeImportText_(value) {
+  return String(value || '')
+    .normalize('NFKD')
+    .toLowerCase()
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9\u0600-\u06ff]+/g, '');
+}
+
+function normalizePersonName_(value) {
+  return String(value || '')
+    .normalize('NFKD')
+    .toLowerCase()
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\u0600-\u06ff]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function resolveTimetableEntryIdForDaily_(
+  date,
+  sectionId,
+  periodNumber,
+  subjectId
+) {
+  try {
+    const entry = findActiveTimetableEntryForDate_(
+      date,
+      sectionId,
+      periodNumber,
+      subjectId
+    );
+    return entry ? entry.TimetableEntryID : '';
+  } catch (_) {
+    // Keep Daily Report saving backward-compatible while timetable setup
+    // is still being completed.
+    return '';
+  }
+}
+
+function findActiveTimetableEntryForDate_(
+  dateInput,
+  sectionId,
+  periodNumber,
+  subjectId
+) {
+  const date = normalizeDate_(dateInput);
+  const section = getSectionById_(sectionId);
+  if (!section) return null;
+
+  const dayOfWeek = Utilities.formatDate(
+    new Date(`${date}T12:00:00`),
+    CONFIG.TIME_ZONE,
+    'EEEE'
+  );
+
+  const context = buildTimetableImportContext_(date);
+  const version = resolveTimetableVersionForSection_(
+    section,
+    date,
+    context
+  );
+
+  if (!version) return null;
+
+  return context.timetableEntries.find(r =>
+    String(r.TimetableVersionID) === String(version.TimetableVersionID) &&
+    String(r.SectionID) === String(sectionId) &&
+    String(r.DayOfWeek).toLowerCase() === dayOfWeek.toLowerCase() &&
+    Number(r.PeriodNumber) === Number(periodNumber) &&
+    (!subjectId || String(r.SubjectID) === String(subjectId)) &&
+    isTrueOrBlank_(r.Active)
+  ) || null;
+}
+
+
+/**
+ * Manual smoke test for the new timetable-driven Daily Report engine.
+ * Uses today's date unless a date is supplied by editing the function call.
+ */
+function testMyDailySchedule() {
+  const result = getMyDailySchedule_(new Date());
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
+}
+
+// -----------------------------------------------------------------------------
+// 16. QUICK TESTS YOU CAN RUN MANUALLY
+// -----------------------------------------------------------------------------
+
+function testPdfArchive() {
+  const result = getPdfArchive_({});
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
+}
+
+function testDownloadHistory() {
+  const result = getDownloadHistory_({});
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
+}
+
+function testAcademicReviewQueue() {
+  const result = getAcademicReviewQueue_({});
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
+}
+
+function testAcademicReportFolders() {
+  const folders = getAcademicReportBaseFolders_();
+  const result = {
+    success: true,
+    rootFolderId: folders.root.getId(),
+    performanceIndicatorsFolderId: folders.pi.getId(),
+    dailyReportsFolderId: folders.daily.getId()
+  };
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
+}
+
+function testHealth() {
+  const result = health_();
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
+}
+
+function testMyContext() {
+  const result = getMyContext_();
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
+}
+
+/**
+ * OPTIONAL helper:
+ * Run this only if you want to recreate/validate the operational tabs later.
+ * It does NOT delete existing data.
+ */
+
+function testDailyReportMonitoring() {
+  const result = getDailyReportMonitoring_({ date: new Date() });
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
+}
+
+function validateOperationalStructure() {
+  const ss = getOperationalSS_();
+  Object.keys(HEADERS).forEach(name => ensureSheet_(ss, name, HEADERS[name]));
+  return { success: true, checked: Object.keys(HEADERS) };
+}
+
+
+/**
+ * Run once after pasting this updated code.
+ * Confirms Master Data timetable tabs and creates the Drive import folders.
+ */
+function testTimetableImporterSetup() {
+  const user = requireCurrentEmployee_();
+  if (!canManageTimetables_(user.employee.EmployeeID)) {
+    throw new Error('Your AdminPermissions record must have ManageTimetables=TRUE or IsSystemAdmin=TRUE.');
+  }
+
+  const masterTabs = validateTimetableMasterStructure_();
+  const folders = getOrCreateAscImportFolders_();
+
+  const result = {
+    success: true,
+    masterTabs,
+    pendingFolderId: folders.pending.getId(),
+    pendingFolderUrl: `https://drive.google.com/drive/folders/${folders.pending.getId()}`,
+    processedFolderId: folders.processed.getId()
+  };
+
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
+}
