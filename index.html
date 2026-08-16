@@ -1,91 +1,561 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Academic Reporting System | Delta Schools</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta http-equiv="refresh" content="0; url=https://script.google.com/a/macros/delta.edu.sa/s/AKfycbzk5TcfmUfiiPN7nDk5bo1Cb-NNW01ZonbMXh8eef4_16-vmEIRkeIFONq_L9kXekk/exec">
+    <title>Admin Support Services</title>
 
-  <style>
-    @font-face {
-      font-family: 'Sansation';
-      src: url('https://deltaschools.github.io/adminsupportservices/Sansation-Regular.ttf') format('truetype');
-      font-style: normal;
-      font-weight: 400 800;
-      font-display: swap;
-    }
+    <style>
+        @font-face {
+            font-family: 'Sansation';
+            src: url('Sansation-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #efe4d2;
-      font-family: 'Sansation', Arial, Helvetica, sans-serif;
-      color: #001f4d;
-      text-align: center;
-    }
+        @font-face {
+            font-family: 'GEDinar';
+            src: url('GE-Dinar-Bold.woff') format('woff');
+            font-weight: bold;
+            font-style: normal;
+        }
 
-    .card {
-      width: min(520px, calc(100% - 40px));
-      background: #ffffff;
-      border-radius: 20px;
-      padding: 34px 28px;
-      box-shadow: 0 10px 28px rgba(0, 31, 77, 0.12);
-    }
+        * {
+            box-sizing: border-box;
+        }
 
-    .logo {
-      width: 190px;
-      max-width: 70%;
-      height: auto;
-      margin-bottom: 18px;
-    }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding-bottom: 45px;
+            font-family: 'Sansation', Arial, sans-serif;
+            background: #d4af37;
+            color: #222;
+            text-align: center;
+        }
 
-    h1 {
-      margin: 0 0 10px;
-      font-size: 28px;
-    }
+        .lang-switch {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            z-index: 10;
+        }
 
-    p {
-      margin: 8px 0 18px;
-      line-height: 1.6;
-    }
+        .lang-switch button {
+            margin-left: 5px;
+            padding: 8px 15px;
+            border: 2px solid #d4af37;
+            border-radius: 20px;
+            cursor: pointer;
+            background: #001f4d;
+            color: white;
+            font-family: inherit;
+            font-weight: bold;
+            transition: 0.2s;
+        }
 
-    a {
-      display: inline-block;
-      text-decoration: none;
-      background: #001f4d;
-      color: #ffffff;
-      padding: 11px 20px;
-      border-radius: 24px;
-      font-weight: 700;
-    }
-  </style>
+        .lang-switch button:hover {
+            background: #003366;
+            transform: translateY(-1px);
+        }
 
-  <script>
-    (function () {
-      const target = "https://script.google.com/a/macros/delta.edu.sa/s/AKfycbzk5TcfmUfiiPN7nDk5bo1Cb-NNW01ZonbMXh8eef4_16-vmEIRkeIFONq_L9kXekk/exec";
-      window.location.replace(target);
-    })();
-  </script>
+        .header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 22px;
+            padding: 50px 20px 25px;
+            color: white;
+        }
+
+        .header img {
+            width: 210px;
+            max-width: 42%;
+            height: auto;
+        }
+
+        .header-text h1 {
+            margin: 0;
+            font-size: 34px;
+        }
+
+        .header-text p {
+            margin: 7px 0 0;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .container {
+            width: 100%;
+            margin-top: 20px;
+            padding: 0 15px;
+        }
+
+        .box {
+            width: 1100px;
+            max-width: 96%;
+            margin: 0 auto;
+            padding: 42px;
+            border: 4px solid #001f4d;
+            border-radius: 22px;
+            background: white;
+            color: #333;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.22);
+        }
+
+        .big-welcome {
+            margin-bottom: 12px;
+            color: #001f4d;
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        p {
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .arabic {
+            direction: rtl;
+            text-align: right;
+            font-family: 'GEDinar', Tahoma, Arial, sans-serif !important;
+            font-weight: bold;
+        }
+
+        .arabic.centered {
+            text-align: center;
+        }
+
+        .tutorial-section {
+            width: 100%;
+            margin: 28px 0 34px;
+            padding: 28px;
+            border: 2px solid #d4af37;
+            border-radius: 17px;
+            background: #f7f7f7;
+        }
+
+        .tutorial-title {
+            margin: 0 0 7px;
+            color: #001f4d;
+            font-size: 21px;
+            font-weight: bold;
+        }
+
+        .tutorial-instruction {
+            margin: 0 0 15px;
+            color: #555;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding-top: 56.25%;
+            overflow: hidden;
+            border-radius: 14px;
+            background: #000;
+            box-shadow: 0 7px 18px rgba(0, 0, 0, 0.18);
+        }
+
+        .video-wrapper iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .divider {
+            height: 1px;
+            margin: 28px 0;
+            background: #d4af37;
+        }
+
+        .qr-title {
+            margin-bottom: 5px;
+            color: #001f4d;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .qr {
+            width: 220px;
+            max-width: 70%;
+            margin: 15px 0 8px;
+            border-radius: 12px;
+        }
+
+        .form-link {
+            margin-bottom: 18px;
+        }
+
+        .form-link strong {
+            color: #001f4d;
+        }
+
+        .form-link a {
+            display: inline-block;
+            margin-top: 4px;
+            color: #001f4d;
+            font-weight: bold;
+            text-decoration: none;
+            word-break: break-word;
+        }
+
+        .form-link a:hover {
+            text-decoration: underline;
+        }
+
+        .password-title {
+            margin: 20px 0 3px;
+            color: #001f4d;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 82%;
+            margin-top: 12px;
+            padding: 13px;
+            border: 1px solid #c8d2dc;
+            border-radius: 9px;
+            font-family: inherit;
+            font-size: 14px;
+            text-align: center;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #001f4d;
+            box-shadow: 0 0 0 3px rgba(0, 31, 77, 0.12);
+        }
+
+        button.enter-btn {
+            margin-top: 16px;
+            padding: 12px 34px;
+            border: 2px solid #d4af37;
+            border-radius: 25px;
+            cursor: pointer;
+            background: #001f4d;
+            color: white;
+            font-family: inherit;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        button.enter-btn:hover {
+            background: #003366;
+            transform: translateY(-1px);
+        }
+
+        .error-message {
+            display: none;
+            margin: 13px 0 0;
+            color: #c62828;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 1100px) {
+            .box {
+                width: 94%;
+                max-width: 94%;
+                padding: 32px;
+            }
+
+            .video-wrapper {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .lang-switch {
+                position: static;
+                padding-top: 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 10px;
+                padding-top: 25px;
+            }
+
+            .header img {
+                width: 170px;
+                max-width: 65%;
+            }
+
+            .header-text h1 {
+                font-size: 29px;
+            }
+
+            .box {
+                width: 100%;
+                max-width: 100%;
+                padding: 25px 18px;
+            }
+
+            .tutorial-section {
+                padding: 16px;
+            }
+
+            .big-welcome {
+                font-size: 26px;
+            }
+
+            input {
+                width: 100%;
+            }
+        }
+    </style>
+
+    <script>
+        function setLanguage(lang) {
+            const isArabic = lang === 'ar';
+
+            document.documentElement.lang = isArabic ? 'ar' : 'en';
+
+            document.getElementById('header-en').style.display =
+                isArabic ? 'none' : 'block';
+
+            document.getElementById('header-ar').style.display =
+                isArabic ? 'block' : 'none';
+
+            document.getElementById('content-en').style.display =
+                isArabic ? 'none' : 'block';
+
+            document.getElementById('content-ar').style.display =
+                isArabic ? 'block' : 'none';
+
+            document.getElementById('video-en').style.display =
+                isArabic ? 'none' : 'block';
+
+            document.getElementById('video-ar').style.display =
+                isArabic ? 'block' : 'none';
+
+            document.getElementById('link-en').style.display =
+                isArabic ? 'none' : 'block';
+
+            document.getElementById('link-ar').style.display =
+                isArabic ? 'block' : 'none';
+
+            document.getElementById('password-en').style.display =
+                isArabic ? 'none' : 'block';
+
+            document.getElementById('password-ar').style.display =
+                isArabic ? 'block' : 'none';
+
+            document.getElementById('enterButton').textContent =
+                isArabic ? 'دخول' : 'Enter';
+
+            document.getElementById('pass').placeholder =
+                isArabic ? 'أدخل كلمة المرور' : 'Enter password';
+
+            document.getElementById('errorMessage').textContent =
+                isArabic ? 'كلمة المرور غير صحيحة.' : 'Incorrect password.';
+
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function checkPassword() {
+            const password = document.getElementById('pass').value.trim();
+            const errorMessage = document.getElementById('errorMessage');
+
+            if (password === 'delta202627') {
+                window.location.href = 'home.html';
+            } else {
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        function handlePasswordKey(event) {
+            if (event.key === 'Enter') {
+                checkPassword();
+            }
+        }
+    </script>
 </head>
 
-<body>
-  <main class="card">
-    <img
-      src="https://deltaschools.github.io/adminsupportservices/logo.png"
-      alt="Delta Schools"
-      class="logo"
-    >
+<body onload="setLanguage('en')">
 
-    <h1>Academic Reporting System</h1>
-    <p>Opening the secure Academic Reporting System…</p>
+    <div class="lang-switch">
+        <button type="button" onclick="setLanguage('en')">English</button>
+        <button type="button" onclick="setLanguage('ar')">العربية</button>
+    </div>
 
-    <a href="https://script.google.com/a/macros/delta.edu.sa/s/AKfycbzk5TcfmUfiiPN7nDk5bo1Cb-NNW01ZonbMXh8eef4_16-vmEIRkeIFONq_L9kXekk/exec">
-      Open Academic Reporting System
-    </a>
-  </main>
+    <div class="header">
+        <img src="logo.png" alt="School Logo">
+
+        <div id="header-en" class="header-text">
+            <h1>Admin Support Services</h1>
+            <p>Empowering Staff • Enhancing Workflow • Supporting Excellence</p>
+        </div>
+
+        <div id="header-ar"
+             class="header-text arabic centered"
+             style="display:none;">
+            <h1>خدمات الدعم الإداري</h1>
+            <p>تمكين الموظفين • تحسين سير العمل • دعم التميز</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="box">
+
+            <!-- English welcome content -->
+            <div id="content-en">
+                <div class="big-welcome">Welcome On Board</div>
+
+                <p>
+                    To obtain the access password, please scan the QR code
+                    or click the link below and complete the Google Form
+                    with the required information.
+                </p>
+            </div>
+
+            <!-- Arabic welcome content -->
+            <div id="content-ar"
+                 class="arabic centered"
+                 style="display:none;">
+                <div class="big-welcome">مرحبًا بكم</div>
+
+                <p>
+                    للحصول على كلمة المرور، يرجى مسح رمز الاستجابة السريعة
+                    أو الضغط على الرابط أدناه، ثم تعبئة نموذج Google
+                    بالبيانات المطلوبة.
+                </p>
+            </div>
+
+            <!-- English tutorial video -->
+            <div id="video-en" class="tutorial-section">
+                <h2 class="tutorial-title">How to Access the Portal</h2>
+
+                <p class="tutorial-instruction">
+                    Watch the short tutorial below to learn how to access
+                    the Admin Support Services Portal.
+                </p>
+
+                <div class="video-wrapper">
+                    <iframe
+                        src="https://www.youtube.com/embed/gocXaWR5Fo4"
+                        title="How to Access the Admin Support Services Portal"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allowfullscreen>
+                    </iframe>
+                </div>
+            </div>
+
+            <!-- Arabic tutorial video -->
+            <div id="video-ar"
+                 class="tutorial-section arabic centered"
+                 style="display:none;">
+                <h2 class="tutorial-title">طريقة الدخول إلى البوابة</h2>
+
+                <p class="tutorial-instruction">
+                    شاهد الفيديو الإرشادي القصير أدناه للتعرف على خطوات
+                    الدخول إلى بوابة خدمات الدعم الإداري.
+                </p>
+
+                <div class="video-wrapper">
+                    <iframe
+                        src="https://www.youtube.com/embed/NK-rG1lhNjw"
+                        title="طريقة الدخول إلى بوابة خدمات الدعم الإداري"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allowfullscreen>
+                    </iframe>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- QR code -->
+            <div id="qr-section">
+                <div id="qr-title-en" class="qr-title">
+                    Scan the QR Code
+                </div>
+
+                <img src="qr.png" alt="Google Form QR Code" class="qr">
+            </div>
+
+            <!-- English form link -->
+            <div id="link-en" class="form-link">
+                <p>
+                    <strong>Google Form Link</strong><br>
+
+                    <a href="https://forms.gle/hF6Yze5XLiJFjh5F8"
+                       target="_blank"
+                       rel="noopener noreferrer">
+                        https://forms.gle/hF6Yze5XLiJFjh5F8
+                    </a>
+                </p>
+            </div>
+
+            <!-- Arabic form link -->
+            <div id="link-ar"
+                 class="form-link arabic centered"
+                 style="display:none;">
+                <p>
+                    <strong>رابط نموذج Google</strong><br>
+
+                    <a href="https://forms.gle/hF6Yze5XLiJFjh5F8"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       style="direction:ltr;">
+                        https://forms.gle/hF6Yze5XLiJFjh5F8
+                    </a>
+                </p>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- English password heading -->
+            <div id="password-en">
+                <div class="password-title">Enter the Access Password</div>
+
+                <p>
+                    Enter the password provided after submitting the Google Form.
+                </p>
+            </div>
+
+            <!-- Arabic password heading -->
+            <div id="password-ar"
+                 class="arabic centered"
+                 style="display:none;">
+                <div class="password-title">أدخل كلمة المرور</div>
+
+                <p>
+                    أدخل كلمة المرور التي ظهرت بعد إرسال نموذج Google.
+                </p>
+            </div>
+
+            <input
+                type="password"
+                id="pass"
+                placeholder="Enter password"
+                onkeydown="handlePasswordKey(event)"
+                autocomplete="current-password">
+
+            <br>
+
+            <button
+                id="enterButton"
+                type="button"
+                class="enter-btn"
+                onclick="checkPassword()">
+                Enter
+            </button>
+
+            <p id="errorMessage" class="error-message">
+                Incorrect password.
+            </p>
+
+        </div>
+    </div>
+
 </body>
 </html>
