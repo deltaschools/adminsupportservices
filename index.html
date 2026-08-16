@@ -313,6 +313,12 @@
     </style>
 
     <script>
+        // Main portal password gate: index.html must NEVER auto-redirect
+        // to Academic Reporting or any Apps Script URL.
+        window.addEventListener('DOMContentLoaded', function () {
+            sessionStorage.removeItem('deltaPortalAccess');
+        });
+
         function setLanguage(lang) {
             const isArabic = lang === 'ar';
 
@@ -365,6 +371,7 @@
             const errorMessage = document.getElementById('errorMessage');
 
             if (password === 'delta202627') {
+                sessionStorage.setItem('deltaPortalAccess', 'granted');
                 window.location.href = 'home.html';
             } else {
                 errorMessage.style.display = 'block';
